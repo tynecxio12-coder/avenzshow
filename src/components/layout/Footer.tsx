@@ -28,14 +28,14 @@ export default function Footer() {
   return (
     <footer className="bg-primary text-primary-foreground">
       <div className="section-padding py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand */}
-          <div>
+          <div className="lg:col-span-2">
             <Link to="/" className="font-display text-2xl font-bold">
               Avenz<span className="text-gold">Shoe</span>
             </Link>
             <p className="mt-4 text-sm text-primary-foreground/60 leading-relaxed">
-              Premium footwear for every occasion. Step into elegance with AvenzShoe — where craftsmanship meets contemporary style.
+              Premium footwear for every occasion. Step into elegance with AvenzShoe — where craftsmanship meets contemporary style. Proudly based in Dhaka, Bangladesh.
             </p>
             <div className="flex gap-4 mt-6">
               {[Instagram, Twitter, Facebook, Youtube].map((Icon, i) => (
@@ -64,15 +64,21 @@ export default function Footer() {
                 <li key={l.path}><Link to={l.path} className="text-sm text-primary-foreground/60 hover:text-gold transition-colors">{l.label}</Link></li>
               ))}
             </ul>
+            <h4 className="font-display text-lg font-semibold mb-3 mt-6">Company</h4>
+            <ul className="space-y-2">
+              {footerLinks.company.map(l => (
+                <li key={l.path}><Link to={l.path} className="text-sm text-primary-foreground/60 hover:text-gold transition-colors">{l.label}</Link></li>
+              ))}
+            </ul>
           </div>
 
           {/* Contact */}
           <div>
             <h4 className="font-display text-lg font-semibold mb-4">Contact</h4>
             <ul className="space-y-3 text-sm text-primary-foreground/60">
-              <li className="flex items-center gap-2"><MapPin className="w-4 h-4 text-gold" /> 123 Fashion Ave, New York, NY</li>
-              <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-gold" /> +1 (555) 123-4567</li>
-              <li className="flex items-center gap-2"><Mail className="w-4 h-4 text-gold" /> hello@avenzshoe.com</li>
+              <li className="flex items-start gap-2"><MapPin className="w-4 h-4 text-gold shrink-0 mt-0.5" /> House 45, Road 12, Gulshan-1, Dhaka 1212, Bangladesh</li>
+              <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-gold" /> +880 1700-123456</li>
+              <li className="flex items-center gap-2"><Mail className="w-4 h-4 text-gold" /> hello@avenzshoe.com.bd</li>
             </ul>
           </div>
         </div>
@@ -82,7 +88,7 @@ export default function Footer() {
         <div className="section-padding py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-primary-foreground/40">
           <p>&copy; {new Date().getFullYear()} AvenzShoe. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <span>Visa</span><span>Mastercard</span><span>Amex</span><span>PayPal</span><span>Apple Pay</span>
+            <span>bKash</span><span>Nagad</span><span>Visa</span><span>Mastercard</span><span>COD</span>
           </div>
         </div>
       </div>

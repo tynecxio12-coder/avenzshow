@@ -5,7 +5,7 @@ const IMG = 'https://images.unsplash.com/';
 export const products: Product[] = [
   {
     id: '1', name: 'AeroGlide Runner', brand: 'AvenzShoe', category: 'sneakers', gender: 'men',
-    price: 189, oldPrice: 249, discount: 24,
+    price: 4500, oldPrice: 5900, discount: 24,
     images: [
       `${IMG}photo-1542291026-7eec264c27ff?w=800`, `${IMG}photo-1606107557195-0e29a4b5b4aa?w=800`,
       `${IMG}photo-1608231387042-66d1773070a5?w=800`, `${IMG}photo-1595950653106-6c9ebd614d3a?w=800`,
@@ -17,7 +17,7 @@ export const products: Product[] = [
   },
   {
     id: '2', name: 'Luxe Oxford Classic', brand: 'AvenzShoe', category: 'formal', gender: 'men',
-    price: 299, oldPrice: 379, discount: 21,
+    price: 7200, oldPrice: 8900, discount: 19,
     images: [
       `${IMG}photo-1614252369475-531eba835eb1?w=800`, `${IMG}photo-1533867617858-e7b97e060509?w=800`,
       `${IMG}photo-1605812860427-4024433a70fd?w=800`,
@@ -29,7 +29,7 @@ export const products: Product[] = [
   },
   {
     id: '3', name: 'CloudStep Casual', brand: 'AvenzShoe', category: 'casual', gender: 'women',
-    price: 149, oldPrice: 199, discount: 25,
+    price: 3500, oldPrice: 4800, discount: 27,
     images: [
       `${IMG}photo-1560769629-975ec94e6a86?w=800`, `${IMG}photo-1465453869711-7e174808ace9?w=800`,
       `${IMG}photo-1551107696-a4b0c5a0d9a2?w=800`,
@@ -41,7 +41,7 @@ export const products: Product[] = [
   },
   {
     id: '4', name: 'StreetKing High-Top', brand: 'AvenzShoe', category: 'sneakers', gender: 'unisex',
-    price: 219, oldPrice: 279, discount: 21,
+    price: 5200, oldPrice: 6500, discount: 20,
     images: [
       `${IMG}photo-1584735175315-9d5df23860e6?w=800`, `${IMG}photo-1597045566677-8cf032ed6634?w=800`,
       `${IMG}photo-1600269452121-4f2416e55c28?w=800`,
@@ -53,7 +53,7 @@ export const products: Product[] = [
   },
   {
     id: '5', name: 'TrailBlazer Boot', brand: 'AvenzShoe', category: 'boots', gender: 'men',
-    price: 269, oldPrice: 329, discount: 18,
+    price: 6500, oldPrice: 7900, discount: 18,
     images: [
       `${IMG}photo-1608256246200-53e635b5b65f?w=800`, `${IMG}photo-1605733160314-4fc7dac4bb16?w=800`,
     ],
@@ -64,7 +64,7 @@ export const products: Product[] = [
   },
   {
     id: '6', name: 'Breeze Sandal', brand: 'AvenzShoe', category: 'sandals', gender: 'women',
-    price: 89, oldPrice: 119, discount: 25,
+    price: 2200, oldPrice: 2900, discount: 24,
     images: [
       `${IMG}photo-1603487742131-4160ec999306?w=800`, `${IMG}photo-1562273138-f9c06c4888e5?w=800`,
     ],
@@ -75,7 +75,7 @@ export const products: Product[] = [
   },
   {
     id: '7', name: 'Junior Sprint', brand: 'AvenzShoe', category: 'sneakers', gender: 'kids',
-    price: 79, oldPrice: 99, discount: 20,
+    price: 1900, oldPrice: 2400, discount: 21,
     images: [
       `${IMG}photo-1514989940723-e8e51635b782?w=800`, `${IMG}photo-1606890737304-57a1ca8a5b62?w=800`,
     ],
@@ -86,7 +86,7 @@ export const products: Product[] = [
   },
   {
     id: '8', name: 'Velocity Pro', brand: 'AvenzShoe', category: 'sports', gender: 'unisex',
-    price: 229, oldPrice: 289, discount: 21,
+    price: 5500, oldPrice: 6900, discount: 20,
     images: [
       `${IMG}photo-1539185441755-769473a23570?w=800`, `${IMG}photo-1491553895911-0055eca6402d?w=800`,
       `${IMG}photo-1460353581641-37baddab0fa2?w=800`,
@@ -98,7 +98,7 @@ export const products: Product[] = [
   },
   {
     id: '9', name: 'Elegance Pump', brand: 'AvenzShoe', category: 'formal', gender: 'women',
-    price: 259, oldPrice: 319, discount: 19,
+    price: 6200, oldPrice: 7500, discount: 17,
     images: [
       `${IMG}photo-1543163521-1bf539c55dd2?w=800`, `${IMG}photo-1515347619252-60a4bf4fff4f?w=800`,
     ],
@@ -109,7 +109,7 @@ export const products: Product[] = [
   },
   {
     id: '10', name: 'Urban Flex Slip-On', brand: 'AvenzShoe', category: 'casual', gender: 'men',
-    price: 129, oldPrice: 169, discount: 24,
+    price: 3100, oldPrice: 3900, discount: 21,
     images: [
       `${IMG}photo-1525966222134-fcfa99b8ae77?w=800`, `${IMG}photo-1600185365926-3a2ce3cdb9eb?w=800`,
     ],
@@ -120,7 +120,7 @@ export const products: Product[] = [
   },
   {
     id: '11', name: 'Summit Hiker', brand: 'AvenzShoe', category: 'boots', gender: 'unisex',
-    price: 289, images: [
+    price: 6900, images: [
       `${IMG}photo-1520219306100-ec4afeeefe58?w=800`, `${IMG}photo-1606890737304-57a1ca8a5b62?w=800`,
     ],
     sizes: [7, 8, 9, 10, 11, 12], colors: [{ name: 'Earth Brown', hex: '#8B6914' }, { name: 'Storm Gray', hex: '#4B5563' }],
@@ -130,7 +130,7 @@ export const products: Product[] = [
   },
   {
     id: '12', name: 'Retro Wave 90s', brand: 'AvenzShoe', category: 'sneakers', gender: 'unisex',
-    price: 169, oldPrice: 209, discount: 19,
+    price: 4100, oldPrice: 5000, discount: 18,
     images: [
       `${IMG}photo-1549298916-b41d501d3772?w=800`, `${IMG}photo-1587563871167-1ee9c731aefb?w=800`,
     ],
@@ -142,12 +142,12 @@ export const products: Product[] = [
 ];
 
 export const reviews: Review[] = [
-  { id: '1', productId: '1', userName: 'James K.', rating: 5, comment: 'Best running shoes I\'ve ever owned. The cushioning is incredible and they look amazing.', date: '2024-03-10', verified: true },
-  { id: '2', productId: '1', userName: 'Sarah M.', rating: 5, comment: 'Super lightweight and breathable. Perfect for my daily runs.', date: '2024-03-08', verified: true },
-  { id: '3', productId: '1', userName: 'Mike D.', rating: 4, comment: 'Great shoe overall, runs slightly narrow. Size up half a size.', date: '2024-03-05', verified: true },
-  { id: '4', productId: '2', userName: 'Robert P.', rating: 5, comment: 'Absolutely stunning craftsmanship. These oxfords are worth every penny.', date: '2024-03-12', verified: true },
-  { id: '5', productId: '3', userName: 'Emily R.', rating: 5, comment: 'So comfortable! I can wear these all day without any discomfort.', date: '2024-03-11', verified: true },
-  { id: '6', productId: '8', userName: 'Alex T.', rating: 5, comment: 'These took 3 minutes off my PR. The carbon plate is a game changer!', date: '2024-03-09', verified: true },
+  { id: '1', productId: '1', userName: 'Rafiq H.', rating: 5, comment: 'Best running shoes I\'ve ever owned. The cushioning is incredible and they look amazing.', date: '2024-03-10', verified: true },
+  { id: '2', productId: '1', userName: 'Nadia S.', rating: 5, comment: 'Super lightweight and breathable. Perfect for my daily runs.', date: '2024-03-08', verified: true },
+  { id: '3', productId: '1', userName: 'Tanvir A.', rating: 4, comment: 'Great shoe overall, runs slightly narrow. Size up half a size.', date: '2024-03-05', verified: true },
+  { id: '4', productId: '2', userName: 'Imran K.', rating: 5, comment: 'Absolutely stunning craftsmanship. These oxfords are worth every taka.', date: '2024-03-12', verified: true },
+  { id: '5', productId: '3', userName: 'Fatema R.', rating: 5, comment: 'So comfortable! I can wear these all day without any discomfort.', date: '2024-03-11', verified: true },
+  { id: '6', productId: '8', userName: 'Arif T.', rating: 5, comment: 'These took 3 minutes off my PR. The carbon plate is a game changer!', date: '2024-03-09', verified: true },
 ];
 
 export const brands = ['AvenzShoe', 'Nike', 'Adidas', 'New Balance', 'Puma'];

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { ShoppingBag, Heart, Search, Menu, X, User, ChevronDown } from 'lucide-react';
+import { ShoppingBag, Heart, Search, Menu, X, User, ChevronDown, LogIn } from 'lucide-react';
 import { useStore } from '@/contexts/StoreContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -29,7 +29,7 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [hoverMenu, setHoverMenu] = useState<string | null>(null);
-  const { cartCount, wishlist, searchQuery, setSearchQuery } = useStore();
+  const { cartCount, wishlist, searchQuery, setSearchQuery, user } = useStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -42,27 +42,23 @@ export default function Navbar() {
 
   return (
     <>
-      {/* Top bar */}
       <div className="bg-primary text-primary-foreground text-xs py-2 text-center tracking-widest font-body uppercase">
-        Free shipping on orders over $150 | Use code <span className="text-gold font-semibold">AVENZ20</span> for 20% off
+        Free shipping on orders over ৳5,000 | Use code <span className="text-gold font-semibold">AVENZ20</span> for 20% off
       </div>
 
       <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-card/95 backdrop-blur-lg shadow-lg' : 'bg-card'}`}>
         <div className="section-padding">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Mobile menu */}
             <button className="lg:hidden p-2 -ml-2" onClick={() => setMobileOpen(!mobileOpen)} aria-label="Menu">
               {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
 
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-1">
               <span className="font-display text-2xl lg:text-3xl font-bold tracking-tight">
                 Avenz<span className="text-gold-gradient">Shoe</span>
               </span>
             </Link>
 
-            {/* Desktop nav */}
             <nav className="hidden lg:flex items-center gap-8">
               {navLinks.map(link => (
                 <div key={link.label} className="relative" onMouseEnter={() => setHoverMenu(link.label)} onMouseLeave={() => setHoverMenu(null)}>
@@ -97,7 +93,6 @@ export default function Navbar() {
               ))}
             </nav>
 
-            {/* Actions */}
             <div className="flex items-center gap-3 lg:gap-4">
               <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 hover:text-gold transition-colors" aria-label="Search">
                 <Search className="w-5 h-5" />
@@ -110,9 +105,15 @@ export default function Navbar() {
                   </span>
                 )}
               </Link>
-              <Link to="/account" className="p-2 hover:text-gold transition-colors hidden sm:block" aria-label="Account">
-                <User className="w-5 h-5" />
-              </Link>
+              {user ? (
+                <Link to="/account" className="p-2 hover:text-gold transition-colors hidden sm:block" aria-label="Account">
+                  <User className="w-5 h-5" />
+                </Link>
+              ) : (
+                <Link to="/login" className="p-2 hover:text-gold transition-colors hidden sm:block" aria-label="Login">
+                  <LogIn className="w-5 h-5" />
+                </Link>
+              )}
               <Link to="/cart" className="p-2 hover:text-gold transition-colors relative" aria-label="Cart">
                 <ShoppingBag className="w-5 h-5" />
                 {cartCount > 0 && (
@@ -125,41 +126,23 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Search bar */}
         <AnimatePresence>
           {searchOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="border-t border-border overflow-hidden"
-            >
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-border overflow-hidden">
               <div className="section-padding py-4">
                 <div className="relative max-w-2xl mx-auto">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input
-                    autoFocus
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Search for shoes, brands, styles..."
-                    className="w-full pl-12 pr-4 py-3 bg-muted rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
-                  />
+                  <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search for shoes, brands, styles..."
+                    className="w-full pl-12 pr-4 py-3 bg-muted rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gold/50" />
                 </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Mobile nav */}
         <AnimatePresence>
           {mobileOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden border-t border-border overflow-hidden bg-card"
-            >
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="lg:hidden border-t border-border overflow-hidden bg-card">
               <nav className="section-padding py-4 space-y-1">
                 {navLinks.map(link => (
                   <div key={link.label}>
@@ -179,7 +162,11 @@ export default function Navbar() {
                 ))}
                 <div className="flex gap-4 pt-4 border-t border-border">
                   <Link to="/wishlist" className="flex items-center gap-2 text-sm hover:text-gold"><Heart className="w-4 h-4" /> Wishlist</Link>
-                  <Link to="/account" className="flex items-center gap-2 text-sm hover:text-gold"><User className="w-4 h-4" /> Account</Link>
+                  {user ? (
+                    <Link to="/account" className="flex items-center gap-2 text-sm hover:text-gold"><User className="w-4 h-4" /> Account</Link>
+                  ) : (
+                    <Link to="/login" className="flex items-center gap-2 text-sm hover:text-gold"><LogIn className="w-4 h-4" /> Login</Link>
+                  )}
                 </div>
               </nav>
             </motion.div>

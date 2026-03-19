@@ -3,6 +3,7 @@ import { Minus, Plus, X, ShoppingBag, ArrowRight, Tag } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Layout from '@/components/layout/Layout';
 import { useStore } from '@/contexts/StoreContext';
+import { formatPrice } from '@/lib/currency';
 import { useState } from 'react';
 
 export default function CartPage() {
@@ -10,15 +11,12 @@ export default function CartPage() {
   const [coupon, setCoupon] = useState('');
   const [couponApplied, setCouponApplied] = useState(false);
 
-  const shipping = cartTotal > 150 ? 0 : 12.99;
+  const shipping = cartTotal > 5000 ? 0 : 60;
   const discount = couponApplied ? cartTotal * 0.2 : 0;
-  const tax = (cartTotal - discount) * 0.08;
-  const total = cartTotal - discount + shipping + tax;
+  const total = cartTotal - discount + shipping;
 
   const applyCoupon = () => {
-    if (coupon.toUpperCase() === 'AVENZ20') {
-      setCouponApplied(true);
-    }
+    if (coupon.toUpperCase() === 'AVENZ20') setCouponApplied(true);
   };
 
   if (cart.length === 0) {
@@ -43,7 +41,6 @@ export default function CartPage() {
         <p className="text-muted-foreground text-sm mt-1">{cart.length} item{cart.length > 1 ? 's' : ''}</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-8">
-          {/* Items */}
           <div className="lg:col-span-2 space-y-4">
             {cart.map((item, i) => (
               <motion.div key={`${item.product.id}-${item.selectedSize}-${item.selectedColor}`}
@@ -68,49 +65,40 @@ export default function CartPage() {
                       <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
                       <button onClick={() => updateCartQty(item.product.id, item.selectedSize, item.selectedColor, item.quantity + 1)} className="p-2 hover:bg-muted"><Plus className="w-3 h-3" /></button>
                     </div>
-                    <span className="font-semibold">${(item.product.price * item.quantity).toFixed(2)}</span>
+                    <span className="font-semibold">{formatPrice(item.product.price * item.quantity)}</span>
                   </div>
                 </div>
               </motion.div>
             ))}
             <div className="flex items-center justify-between pt-4">
-              <Link to="/shop" className="text-sm font-medium hover:text-gold transition-colors flex items-center gap-1">
-                ← Continue Shopping
-              </Link>
+              <Link to="/shop" className="text-sm font-medium hover:text-gold transition-colors flex items-center gap-1">← Continue Shopping</Link>
               <button onClick={clearCart} className="text-sm text-destructive hover:underline">Clear Cart</button>
             </div>
           </div>
 
-          {/* Summary */}
           <div className="bg-card rounded-xl border border-border p-6 h-fit sticky top-28">
             <h3 className="font-display text-lg font-bold mb-4">Order Summary</h3>
-
-            {/* Coupon */}
             <div className="flex gap-2 mb-6">
               <div className="relative flex-1">
                 <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input value={coupon} onChange={e => setCoupon(e.target.value)} placeholder="Coupon code" className="w-full pl-9 pr-3 py-2.5 text-sm border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-gold/50" />
               </div>
-              <button onClick={applyCoupon} className="px-4 py-2.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg uppercase tracking-wide hover:bg-charcoal-light transition-colors">
-                Apply
-              </button>
+              <button onClick={applyCoupon} className="px-4 py-2.5 bg-primary text-primary-foreground text-xs font-semibold rounded-lg uppercase tracking-wide hover:bg-charcoal-light transition-colors">Apply</button>
             </div>
             {couponApplied && <p className="text-xs text-green-600 mb-4">Coupon AVENZ20 applied — 20% off!</p>}
 
             <div className="space-y-3 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>${cartTotal.toFixed(2)}</span></div>
-              {discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-${discount.toFixed(2)}</span></div>}
-              <div className="flex justify-between"><span className="text-muted-foreground">Shipping</span><span>{shipping === 0 ? <span className="text-green-600">Free</span> : `$${shipping.toFixed(2)}`}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Tax</span><span>${tax.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(cartTotal)}</span></div>
+              {discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-{formatPrice(discount)}</span></div>}
+              <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{shipping === 0 ? <span className="text-green-600">Free</span> : formatPrice(shipping)}</span></div>
               <div className="border-t border-border pt-3 flex justify-between font-bold text-base">
-                <span>Total</span><span>${total.toFixed(2)}</span>
+                <span>Total</span><span>{formatPrice(total)}</span>
               </div>
             </div>
 
             <Link to="/checkout" className="block mt-6 w-full py-3.5 gold-gradient text-primary font-semibold text-center uppercase text-sm tracking-widest rounded-lg hover:opacity-90 transition-opacity">
               Proceed to Checkout
             </Link>
-
             <p className="text-[10px] text-muted-foreground text-center mt-4">Secure checkout powered by 256-bit encryption</p>
           </div>
         </div>
