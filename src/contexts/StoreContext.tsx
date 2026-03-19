@@ -1,10 +1,21 @@
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, ReactNode } from 'react';
 import { CartItem, Product, WishlistItem } from '@/types';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 interface UserInfo {
   name: string;
   email: string;
+}
+
+interface Order {
+  id: string;
+  items: CartItem[];
+  total: number;
+  date: string;
+  status: string;
+  delivery: string;
+  payment: string;
 }
 
 interface StoreContextType {
@@ -12,6 +23,7 @@ interface StoreContextType {
   wishlist: WishlistItem[];
   recentlyViewed: Product[];
   user: UserInfo | null;
+  orders: Order[];
   login: (user: UserInfo) => void;
   logout: () => void;
   addToCart: (product: Product, size: number, color: string, qty?: number) => void;
@@ -25,16 +37,31 @@ interface StoreContextType {
   addToRecentlyViewed: (product: Product) => void;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+  placeOrder: (delivery: string, payment: string, total: number) => string;
 }
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
+function loadFromStorage<T>(key: string, fallback: T): T {
+  try {
+    const data = localStorage.getItem(key);
+    return data ? JSON.parse(data) : fallback;
+  } catch { return fallback; }
+}
+
 export const StoreProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
-  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [cart, setCart] = useState<CartItem[]>(() => loadFromStorage('avenz_cart', []));
+  const [wishlist, setWishlist] = useState<WishlistItem[]>(() => loadFromStorage('avenz_wishlist', []));
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [user, setUser] = useState<UserInfo | null>(null);
+  const [user, setUser] = useState<UserInfo | null>(() => loadFromStorage('avenz_user', null));
+  const [orders, setOrders] = useState<Order[]>(() => loadFromStorage('avenz_orders', []));
+
+  // Persist to localStorage
+  useEffect(() => { localStorage.setItem('avenz_cart', JSON.stringify(cart)); }, [cart]);
+  useEffect(() => { localStorage.setItem('avenz_wishlist', JSON.stringify(wishlist)); }, [wishlist]);
+  useEffect(() => { localStorage.setItem('avenz_user', JSON.stringify(user)); }, [user]);
+  useEffect(() => { localStorage.setItem('avenz_orders', JSON.stringify(orders)); }, [orders]);
 
   const login = useCallback((u: UserInfo) => setUser(u), []);
   const logout = useCallback(() => { setUser(null); toast.info('Logged out successfully'); }, []);
@@ -79,8 +106,24 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     setRecentlyViewed(prev => [product, ...prev.filter(p => p.id !== product.id)].slice(0, 10));
   }, []);
 
+  const placeOrder = useCallback((delivery: string, payment: string, total: number): string => {
+    const orderId = `AVZ-${Date.now().toString(36).toUpperCase()}`;
+    const newOrder: Order = {
+      id: orderId,
+      items: [...cart],
+      total,
+      date: new Date().toISOString(),
+      status: 'Processing',
+      delivery,
+      payment,
+    };
+    setOrders(prev => [newOrder, ...prev]);
+    setCart([]);
+    return orderId;
+  }, [cart]);
+
   return (
-    <StoreContext.Provider value={{ cart, wishlist, recentlyViewed, user, login, logout, addToCart, removeFromCart, updateCartQty, clearCart, cartTotal, cartCount, toggleWishlist, isInWishlist, addToRecentlyViewed, searchQuery, setSearchQuery }}>
+    <StoreContext.Provider value={{ cart, wishlist, recentlyViewed, user, orders, login, logout, addToCart, removeFromCart, updateCartQty, clearCart, cartTotal, cartCount, toggleWishlist, isInWishlist, addToRecentlyViewed, searchQuery, setSearchQuery, placeOrder }}>
       {children}
     </StoreContext.Provider>
   );
