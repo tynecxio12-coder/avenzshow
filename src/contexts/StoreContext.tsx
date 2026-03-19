@@ -2,10 +2,18 @@ import React, { createContext, useContext, useState, useCallback, ReactNode } fr
 import { CartItem, Product, WishlistItem } from '@/types';
 import { toast } from 'sonner';
 
+interface UserInfo {
+  name: string;
+  email: string;
+}
+
 interface StoreContextType {
   cart: CartItem[];
   wishlist: WishlistItem[];
   recentlyViewed: Product[];
+  user: UserInfo | null;
+  login: (user: UserInfo) => void;
+  logout: () => void;
   addToCart: (product: Product, size: number, color: string, qty?: number) => void;
   removeFromCart: (productId: string, size: number, color: string) => void;
   updateCartQty: (productId: string, size: number, color: string, qty: number) => void;
@@ -26,13 +34,15 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [user, setUser] = useState<UserInfo | null>(null);
+
+  const login = useCallback((u: UserInfo) => setUser(u), []);
+  const logout = useCallback(() => { setUser(null); toast.info('Logged out successfully'); }, []);
 
   const addToCart = useCallback((product: Product, size: number, color: string, qty = 1) => {
     setCart(prev => {
       const existing = prev.find(i => i.product.id === product.id && i.selectedSize === size && i.selectedColor === color);
-      if (existing) {
-        return prev.map(i => i === existing ? { ...i, quantity: i.quantity + qty } : i);
-      }
+      if (existing) return prev.map(i => i === existing ? { ...i, quantity: i.quantity + qty } : i);
       return [...prev, { product, quantity: qty, selectedSize: size, selectedColor: color }];
     });
     toast.success(`${product.name} added to cart`);
@@ -46,23 +56,18 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   const updateCartQty = useCallback((productId: string, size: number, color: string, qty: number) => {
     if (qty < 1) return;
     setCart(prev => prev.map(i =>
-      i.product.id === productId && i.selectedSize === size && i.selectedColor === color
-        ? { ...i, quantity: qty } : i
+      i.product.id === productId && i.selectedSize === size && i.selectedColor === color ? { ...i, quantity: qty } : i
     ));
   }, []);
 
   const clearCart = useCallback(() => setCart([]), []);
-
   const cartTotal = cart.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
   const toggleWishlist = useCallback((product: Product) => {
     setWishlist(prev => {
       const exists = prev.find(i => i.product.id === product.id);
-      if (exists) {
-        toast.info(`${product.name} removed from wishlist`);
-        return prev.filter(i => i.product.id !== product.id);
-      }
+      if (exists) { toast.info(`${product.name} removed from wishlist`); return prev.filter(i => i.product.id !== product.id); }
       toast.success(`${product.name} added to wishlist`);
       return [...prev, { product }];
     });
@@ -71,14 +76,11 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   const isInWishlist = useCallback((productId: string) => wishlist.some(i => i.product.id === productId), [wishlist]);
 
   const addToRecentlyViewed = useCallback((product: Product) => {
-    setRecentlyViewed(prev => {
-      const filtered = prev.filter(p => p.id !== product.id);
-      return [product, ...filtered].slice(0, 10);
-    });
+    setRecentlyViewed(prev => [product, ...prev.filter(p => p.id !== product.id)].slice(0, 10));
   }, []);
 
   return (
-    <StoreContext.Provider value={{ cart, wishlist, recentlyViewed, addToCart, removeFromCart, updateCartQty, clearCart, cartTotal, cartCount, toggleWishlist, isInWishlist, addToRecentlyViewed, searchQuery, setSearchQuery }}>
+    <StoreContext.Provider value={{ cart, wishlist, recentlyViewed, user, login, logout, addToCart, removeFromCart, updateCartQty, clearCart, cartTotal, cartCount, toggleWishlist, isInWishlist, addToRecentlyViewed, searchQuery, setSearchQuery }}>
       {children}
     </StoreContext.Provider>
   );

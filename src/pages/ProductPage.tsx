@@ -6,6 +6,7 @@ import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/ProductCard';
 import { products, reviews } from '@/data/products';
 import { useStore } from '@/contexts/StoreContext';
+import { formatPrice } from '@/lib/currency';
 
 export default function ProductPage() {
   const { id } = useParams();
@@ -49,7 +50,6 @@ export default function ProductPage() {
 
   return (
     <Layout>
-      {/* Breadcrumb */}
       <div className="section-padding py-4 text-xs text-muted-foreground flex items-center gap-2">
         <Link to="/" className="hover:text-foreground">Home</Link>
         <ChevronRight className="w-3 h-3" />
@@ -60,7 +60,6 @@ export default function ProductPage() {
 
       <div className="section-padding pb-16">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16">
-          {/* Images */}
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <div className="aspect-square rounded-2xl overflow-hidden bg-muted mb-4">
               <img src={product.images[selectedImage]} alt={product.name} className="w-full h-full object-cover" />
@@ -75,7 +74,6 @@ export default function ProductPage() {
             </div>
           </motion.div>
 
-          {/* Info */}
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
             <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">{product.brand}</p>
             <h1 className="font-display text-3xl md:text-4xl font-bold mt-2">{product.name}</h1>
@@ -90,10 +88,10 @@ export default function ProductPage() {
             </div>
 
             <div className="flex items-baseline gap-3 mt-4">
-              <span className="text-3xl font-bold">${product.price}</span>
+              <span className="text-3xl font-bold">{formatPrice(product.price)}</span>
               {product.oldPrice && (
                 <>
-                  <span className="text-lg text-muted-foreground line-through">${product.oldPrice}</span>
+                  <span className="text-lg text-muted-foreground line-through">{formatPrice(product.oldPrice)}</span>
                   <span className="px-2 py-0.5 text-xs font-semibold bg-destructive/10 text-destructive rounded">-{product.discount}%</span>
                 </>
               )}
@@ -101,7 +99,6 @@ export default function ProductPage() {
 
             <p className="text-sm text-muted-foreground mt-4 leading-relaxed">{product.description}</p>
 
-            {/* Color */}
             <div className="mt-6">
               <p className="text-sm font-semibold mb-2">Color: <span className="font-normal text-muted-foreground">{selectedColor}</span></p>
               <div className="flex gap-2">
@@ -113,7 +110,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Size */}
             <div className="mt-6">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-sm font-semibold">Size</p>
@@ -130,7 +126,6 @@ export default function ProductPage() {
               {!selectedSize && <p className="text-xs text-destructive mt-1">Please select a size</p>}
             </div>
 
-            {/* Quantity & Add to cart */}
             <div className="flex items-center gap-4 mt-8">
               <div className="flex items-center border border-border rounded-lg">
                 <button onClick={() => setQty(Math.max(1, qty - 1))} className="p-3 hover:bg-muted transition-colors"><Minus className="w-4 h-4" /></button>
@@ -147,7 +142,6 @@ export default function ProductPage() {
               </button>
             </div>
 
-            {/* Stock */}
             <div className="mt-4 flex items-center gap-2">
               <span className={`w-2 h-2 rounded-full ${product.stock > 10 ? 'bg-green-500' : product.stock > 0 ? 'bg-yellow-500' : 'bg-destructive'}`} />
               <span className="text-xs text-muted-foreground">
@@ -156,11 +150,10 @@ export default function ProductPage() {
               <span className="text-xs text-muted-foreground ml-auto">SKU: {product.sku}</span>
             </div>
 
-            {/* Perks */}
             <div className="mt-6 grid grid-cols-3 gap-3">
               {[
-                { icon: Truck, text: 'Free Shipping' },
-                { icon: RotateCcw, text: '30-Day Returns' },
+                { icon: Truck, text: 'Fast Delivery' },
+                { icon: RotateCcw, text: '7-Day Returns' },
                 { icon: Shield, text: 'Secure Payment' },
               ].map(({ icon: Icon, text }) => (
                 <div key={text} className="flex flex-col items-center gap-1 p-3 rounded-lg bg-secondary text-center">
@@ -215,15 +208,15 @@ export default function ProductPage() {
             )}
             {activeTab === 'shipping' && (
               <div className="text-sm text-muted-foreground space-y-3 max-w-2xl">
-                <p><strong className="text-foreground">Free Standard Shipping</strong> on orders over $150. Delivery within 5-7 business days.</p>
-                <p><strong className="text-foreground">Express Shipping</strong> available for $12.99. Delivery within 2-3 business days.</p>
-                <p><strong className="text-foreground">Returns</strong>: Free returns within 30 days of purchase. Items must be unworn with original packaging.</p>
+                <p><strong className="text-foreground">Inside Dhaka</strong>: ৳60 delivery charge. 1-2 business days.</p>
+                <p><strong className="text-foreground">Outside Dhaka</strong>: ৳120 delivery charge. 3-5 business days.</p>
+                <p><strong className="text-foreground">Free Delivery</strong> on orders over ৳5,000 (Inside Dhaka).</p>
+                <p><strong className="text-foreground">Returns</strong>: Free returns within 7 days of delivery. Items must be unworn with original packaging.</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Related */}
         {related.length > 0 && (
           <div className="mt-16">
             <h2 className="font-display text-2xl font-bold mb-8">You May Also Like</h2>

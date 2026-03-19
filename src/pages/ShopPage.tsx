@@ -5,6 +5,7 @@ import Layout from '@/components/layout/Layout';
 import ProductCard from '@/components/ProductCard';
 import { products, categories, genders } from '@/data/products';
 import { useStore } from '@/contexts/StoreContext';
+import { formatPrice } from '@/lib/currency';
 
 const sortOptions = [
   { label: 'Newest', value: 'newest' },
@@ -15,10 +16,10 @@ const sortOptions = [
 ];
 
 const priceRanges = [
-  { label: 'Under $100', min: 0, max: 100 },
-  { label: '$100 - $200', min: 100, max: 200 },
-  { label: '$200 - $300', min: 200, max: 300 },
-  { label: 'Over $300', min: 300, max: Infinity },
+  { label: 'Under ৳2,000', min: 0, max: 2000 },
+  { label: '৳2,000 - ৳4,000', min: 2000, max: 4000 },
+  { label: '৳4,000 - ৳6,000', min: 4000, max: 6000 },
+  { label: 'Over ৳6,000', min: 6000, max: Infinity },
 ];
 
 export default function ShopPage() {
@@ -35,7 +36,6 @@ export default function ShopPage() {
 
   const filtered = useMemo(() => {
     let result = [...products];
-
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       result = result.filter(p => p.name.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q) || p.tags.some(t => t.includes(q)));
@@ -57,7 +57,6 @@ export default function ShopPage() {
       case 'popular': result.sort((a, b) => b.reviewsCount - a.reviewsCount); break;
       case 'rating': result.sort((a, b) => b.rating - a.rating); break;
     }
-
     return result;
   }, [searchQuery, selectedCategory, selectedGender, selectedPrice, filter, sort]);
 
@@ -99,16 +98,13 @@ export default function ShopPage() {
           ))}
         </div>
       </div>
-      {hasFilters && (
-        <button onClick={clearFilters} className="text-sm text-destructive hover:underline">Clear all filters</button>
-      )}
+      {hasFilters && <button onClick={clearFilters} className="text-sm text-destructive hover:underline">Clear all filters</button>}
     </div>
   );
 
   return (
     <Layout>
       <div className="section-padding py-8">
-        {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="font-display text-3xl md:text-4xl font-bold">
@@ -131,12 +127,7 @@ export default function ShopPage() {
         </div>
 
         <div className="flex gap-8">
-          {/* Desktop filters */}
-          <div className="hidden lg:block w-56 shrink-0">
-            <FilterPanel />
-          </div>
-
-          {/* Mobile filters */}
+          <div className="hidden lg:block w-56 shrink-0"><FilterPanel /></div>
           {filtersOpen && (
             <div className="fixed inset-0 z-50 bg-background lg:hidden overflow-auto">
               <div className="p-6">
@@ -151,8 +142,6 @@ export default function ShopPage() {
               </div>
             </div>
           )}
-
-          {/* Products */}
           <div className="flex-1">
             {filtered.length === 0 ? (
               <div className="text-center py-20">

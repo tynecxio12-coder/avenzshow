@@ -6,6 +6,7 @@ import ProductCard from '@/components/ProductCard';
 import { products } from '@/data/products';
 import heroBanner from '@/assets/hero-banner.jpg';
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 const categories = [
   { name: 'Sneakers', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400', path: '/shop?category=sneakers' },
@@ -17,16 +18,16 @@ const categories = [
 ];
 
 const testimonials = [
-  { name: 'Jessica M.', text: 'The quality is unmatched. My AvenzShoe sneakers are the most comfortable shoes I own. The attention to detail is incredible.', rating: 5, role: 'Verified Buyer' },
-  { name: 'David R.', text: 'Ordered the Oxford Classics for my wedding — they were absolutely perfect. Premium materials and flawless craftsmanship.', rating: 5, role: 'Verified Buyer' },
-  { name: 'Sarah K.', text: 'Fast shipping, beautiful packaging, and the shoes exceeded my expectations. AvenzShoe is now my go-to brand.', rating: 5, role: 'Verified Buyer' },
+  { name: 'Nadia A.', text: 'The quality is unmatched. My AvenzShoe sneakers are the most comfortable shoes I own. Amazing craftsmanship!', rating: 5, role: 'Verified Buyer, Dhaka' },
+  { name: 'Rafiq H.', text: 'Ordered the Oxford Classics for an event — they were absolutely perfect. Premium materials and flawless finish.', rating: 5, role: 'Verified Buyer, Chittagong' },
+  { name: 'Fatema R.', text: 'Fast delivery, beautiful packaging, and the shoes exceeded my expectations. AvenzShoe is now my go-to brand.', rating: 5, role: 'Verified Buyer, Dhaka' },
 ];
 
 const trustBadges = [
-  { icon: Truck, title: 'Free Shipping', desc: 'On orders over $150' },
-  { icon: Shield, title: 'Secure Payment', desc: '100% protected checkout' },
-  { icon: RotateCcw, title: 'Easy Returns', desc: '30-day return policy' },
-  { icon: Headphones, title: '24/7 Support', desc: 'Dedicated customer care' },
+  { icon: Truck, title: 'Fast Delivery', desc: 'Across Bangladesh' },
+  { icon: Shield, title: 'Secure Payment', desc: 'bKash, Card, COD' },
+  { icon: RotateCcw, title: 'Easy Returns', desc: '7-day return policy' },
+  { icon: Headphones, title: 'Support', desc: '10AM–8PM daily' },
 ];
 
 export default function HomePage() {
@@ -34,6 +35,11 @@ export default function HomePage() {
   const newArrivals = products.filter(p => p.isNew);
   const bestSellers = products.filter(p => p.isBestSeller);
   const trending = products.filter(p => p.isTrending);
+
+  const handleNewsletter = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email) { toast.success('Subscribed successfully!'); setEmail(''); }
+  };
 
   return (
     <Layout>
@@ -44,13 +50,8 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/60 to-transparent" />
         </div>
         <div className="relative h-full section-padding flex items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -40 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
-            className="max-w-xl"
-          >
-            <span className="text-gold text-sm uppercase tracking-[0.3em] font-semibold">New Collection 2024</span>
+          <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="max-w-xl">
+            <span className="text-gold text-sm uppercase tracking-[0.3em] font-semibold">New Collection 2025</span>
             <h1 className="font-display text-5xl md:text-7xl font-bold text-primary-foreground mt-4 leading-[1.1]">
               Step Into <span className="text-gold-gradient">Elegance</span>
             </h1>
@@ -100,9 +101,7 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/80 to-transparent" />
                 <div className="absolute bottom-4 left-4 right-4">
                   <h3 className="font-display text-lg font-semibold text-primary-foreground">{cat.name}</h3>
-                  <span className="text-xs text-primary-foreground/60 flex items-center gap-1 mt-1">
-                    Explore <ChevronRight className="w-3 h-3" />
-                  </span>
+                  <span className="text-xs text-primary-foreground/60 flex items-center gap-1 mt-1">Explore <ChevronRight className="w-3 h-3" /></span>
                 </div>
               </Link>
             </motion.div>
@@ -207,16 +206,13 @@ export default function HomePage() {
         <div className="text-center max-w-lg mx-auto">
           <h2 className="font-display text-3xl font-bold text-primary-foreground">Stay in the Loop</h2>
           <p className="text-primary-foreground/60 mt-3 text-sm">Subscribe for exclusive drops, special offers, and style inspiration.</p>
-          <div className="flex mt-6 gap-2">
-            <input
-              type="email" value={email} onChange={e => setEmail(e.target.value)}
-              placeholder="Your email address"
-              className="flex-1 px-4 py-3 rounded-lg bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50"
-            />
-            <button className="px-6 py-3 gold-gradient text-primary font-semibold text-sm rounded-lg uppercase tracking-wider hover:opacity-90 transition-opacity">
+          <form onSubmit={handleNewsletter} className="flex mt-6 gap-2">
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Your email address" required
+              className="flex-1 px-4 py-3 rounded-lg bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/40 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50" />
+            <button type="submit" className="px-6 py-3 gold-gradient text-primary font-semibold text-sm rounded-lg uppercase tracking-wider hover:opacity-90 transition-opacity">
               Subscribe
             </button>
-          </div>
+          </form>
         </div>
       </section>
     </Layout>
