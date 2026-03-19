@@ -19,7 +19,7 @@ const paymentMethods = [
 ];
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, clearCart } = useStore();
+  const { cart, cartTotal, placeOrder } = useStore();
   const navigate = useNavigate();
   const [delivery, setDelivery] = useState('dhaka');
   const [payment, setPayment] = useState('cod');
@@ -29,7 +29,9 @@ export default function CheckoutPage() {
 
   const deliveryCharge = deliveryOptions.find(d => d.id === delivery)?.price || 60;
   const discount = couponApplied ? cartTotal * 0.2 : 0;
-  const total = cartTotal - discount + deliveryCharge;
+  const freeShipping = cartTotal > 5000 && delivery === 'dhaka';
+  const finalDelivery = freeShipping ? 0 : deliveryCharge;
+  const total = cartTotal - discount + finalDelivery;
 
   const applyCoupon = () => {
     if (coupon.toUpperCase() === 'AVENZ20') setCouponApplied(true);
@@ -38,9 +40,13 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success('Order placed successfully! Thank you for shopping with AvenzShoe.');
-    clearCart();
-    navigate('/');
+    const orderId = placeOrder(
+      deliveryOptions.find(d => d.id === delivery)?.label || 'Inside Dhaka',
+      paymentMethods.find(p => p.id === payment)?.label || 'COD',
+      total,
+    );
+    toast.success('Order placed successfully!');
+    navigate(`/order-confirmation/${orderId}`);
   };
 
   if (cart.length === 0) {
@@ -64,9 +70,7 @@ export default function CheckoutPage() {
 
         <form onSubmit={handlePlaceOrder}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mt-8">
-            {/* Form */}
             <div className="lg:col-span-2 space-y-8">
-              {/* Billing */}
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-xl border border-border p-6">
                 <h2 className="font-display text-lg font-bold mb-4">Billing & Shipping Details</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -82,7 +86,6 @@ export default function CheckoutPage() {
                 </div>
               </motion.div>
 
-              {/* Delivery */}
               <div className="bg-card rounded-xl border border-border p-6">
                 <h2 className="font-display text-lg font-bold mb-4">Delivery Option</h2>
                 <div className="space-y-3">
@@ -95,13 +98,14 @@ export default function CheckoutPage() {
                           <p className="text-xs text-muted-foreground">{opt.time}</p>
                         </div>
                       </div>
-                      <span className="font-semibold text-sm">{formatPrice(opt.price)}</span>
+                      <span className="font-semibold text-sm">
+                        {opt.id === 'dhaka' && cartTotal > 5000 ? <span className="text-green-600">Free</span> : formatPrice(opt.price)}
+                      </span>
                     </label>
                   ))}
                 </div>
               </div>
 
-              {/* Payment */}
               <div className="bg-card rounded-xl border border-border p-6">
                 <h2 className="font-display text-lg font-bold mb-4">Payment Method</h2>
                 <div className="space-y-3">
@@ -115,14 +119,12 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Notes */}
               <div className="bg-card rounded-xl border border-border p-6">
                 <h2 className="font-display text-lg font-bold mb-4">Order Notes (Optional)</h2>
                 <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Special instructions for delivery..." className="w-full px-4 py-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 resize-none" />
               </div>
             </div>
 
-            {/* Order Summary */}
             <div className="h-fit sticky top-28">
               <div className="bg-card rounded-xl border border-border p-6">
                 <h2 className="font-display text-lg font-bold mb-4">Order Summary</h2>
@@ -139,7 +141,6 @@ export default function CheckoutPage() {
                   ))}
                 </div>
 
-                {/* Coupon */}
                 <div className="flex gap-2 mb-4">
                   <input value={coupon} onChange={e => setCoupon(e.target.value)} placeholder="Coupon code" className="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-background" />
                   <button type="button" onClick={applyCoupon} className="px-4 py-2 bg-primary text-primary-foreground text-xs font-semibold rounded-lg">Apply</button>
@@ -149,7 +150,7 @@ export default function CheckoutPage() {
                 <div className="space-y-2 text-sm border-t border-border pt-4">
                   <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatPrice(cartTotal)}</span></div>
                   {discount > 0 && <div className="flex justify-between text-green-600"><span>Discount</span><span>-{formatPrice(discount)}</span></div>}
-                  <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{formatPrice(deliveryCharge)}</span></div>
+                  <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span>{freeShipping ? <span className="text-green-600">Free</span> : formatPrice(finalDelivery)}</span></div>
                   <div className="border-t border-border pt-3 flex justify-between font-bold text-base">
                     <span>Total</span><span>{formatPrice(total)}</span>
                   </div>

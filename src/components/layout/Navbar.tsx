@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart, Search, Menu, X, User, ChevronDown, LogIn } from 'lucide-react';
 import { useStore } from '@/contexts/StoreContext';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +31,7 @@ export default function Navbar() {
   const [hoverMenu, setHoverMenu] = useState<string | null>(null);
   const { cartCount, wishlist, searchQuery, setSearchQuery, user } = useStore();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -39,6 +40,14 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => { setMobileOpen(false); setSearchOpen(false); }, [location]);
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate('/shop');
+      setSearchOpen(false);
+    }
+  };
 
   return (
     <>
@@ -70,24 +79,20 @@ export default function Navbar() {
                     {link.label}
                     {link.children && <ChevronDown className="w-3 h-3" />}
                   </Link>
-                  {link.children && (
-                    <AnimatePresence>
-                      {hoverMenu === link.label && (
-                        <motion.div
-                          initial={{ opacity: 0, y: 8 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: 8 }}
-                          transition={{ duration: 0.2 }}
-                          className="absolute top-full left-0 mt-2 w-48 bg-card rounded-lg shadow-xl border border-border py-2"
-                        >
-                          {link.children.map(child => (
-                            <Link key={child.path} to={child.path} className="block px-4 py-2 text-sm hover:bg-muted hover:text-gold transition-colors">
-                              {child.label}
-                            </Link>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                  {link.children && hoverMenu === link.label && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute top-full left-0 mt-2 w-48 bg-card rounded-lg shadow-xl border border-border py-2"
+                    >
+                      {link.children.map(child => (
+                        <Link key={child.path} to={child.path} className="block px-4 py-2 text-sm hover:bg-muted hover:text-gold transition-colors">
+                          {child.label}
+                        </Link>
+                      ))}
+                    </motion.div>
                   )}
                 </div>
               ))}
@@ -126,52 +131,48 @@ export default function Navbar() {
           </div>
         </div>
 
-        <AnimatePresence>
-          {searchOpen && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-border overflow-hidden">
-              <div className="section-padding py-4">
-                <div className="relative max-w-2xl mx-auto">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-                  <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search for shoes, brands, styles..."
-                    className="w-full pl-12 pr-4 py-3 bg-muted rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gold/50" />
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {searchOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-border overflow-hidden">
+            <div className="section-padding py-4">
+              <form onSubmit={handleSearchSubmit} className="relative max-w-2xl mx-auto">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <input autoFocus type="text" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search for shoes, brands, styles..."
+                  className="w-full pl-12 pr-4 py-3 bg-muted rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-gold/50" />
+              </form>
+            </div>
+          </motion.div>
+        )}
 
-        <AnimatePresence>
-          {mobileOpen && (
-            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="lg:hidden border-t border-border overflow-hidden bg-card">
-              <nav className="section-padding py-4 space-y-1">
-                {navLinks.map(link => (
-                  <div key={link.label}>
-                    <Link to={link.path} className="block py-3 text-sm font-medium uppercase tracking-wide hover:text-gold transition-colors">
-                      {link.label}
-                    </Link>
-                    {link.children && (
-                      <div className="pl-4 space-y-1">
-                        {link.children.map(child => (
-                          <Link key={child.path} to={child.path} className="block py-2 text-sm text-muted-foreground hover:text-gold transition-colors">
-                            {child.label}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-                <div className="flex gap-4 pt-4 border-t border-border">
-                  <Link to="/wishlist" className="flex items-center gap-2 text-sm hover:text-gold"><Heart className="w-4 h-4" /> Wishlist</Link>
-                  {user ? (
-                    <Link to="/account" className="flex items-center gap-2 text-sm hover:text-gold"><User className="w-4 h-4" /> Account</Link>
-                  ) : (
-                    <Link to="/login" className="flex items-center gap-2 text-sm hover:text-gold"><LogIn className="w-4 h-4" /> Login</Link>
+        {mobileOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="lg:hidden border-t border-border overflow-hidden bg-card">
+            <nav className="section-padding py-4 space-y-1">
+              {navLinks.map(link => (
+                <div key={link.label}>
+                  <Link to={link.path} className="block py-3 text-sm font-medium uppercase tracking-wide hover:text-gold transition-colors">
+                    {link.label}
+                  </Link>
+                  {link.children && (
+                    <div className="pl-4 space-y-1">
+                      {link.children.map(child => (
+                        <Link key={child.path} to={child.path} className="block py-2 text-sm text-muted-foreground hover:text-gold transition-colors">
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
                   )}
                 </div>
-              </nav>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              ))}
+              <div className="flex gap-4 pt-4 border-t border-border">
+                <Link to="/wishlist" className="flex items-center gap-2 text-sm hover:text-gold"><Heart className="w-4 h-4" /> Wishlist</Link>
+                {user ? (
+                  <Link to="/account" className="flex items-center gap-2 text-sm hover:text-gold"><User className="w-4 h-4" /> Account</Link>
+                ) : (
+                  <Link to="/login" className="flex items-center gap-2 text-sm hover:text-gold"><LogIn className="w-4 h-4" /> Login</Link>
+                )}
+              </div>
+            </nav>
+          </motion.div>
+        )}
       </header>
     </>
   );
