@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function AccountPage() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, session } = useAuth();
 
   if (loading) {
     return (
@@ -15,7 +15,7 @@ export default function AccountPage() {
     );
   }
 
-  if (!user) {
+  if (!user || !session) {
     return (
       <Layout>
         <div className="min-h-[70vh] flex flex-col items-center justify-center text-center px-4">
@@ -69,6 +69,11 @@ export default function AccountPage() {
           >
             Logout
           </button>
+
+          <div className="mt-6 text-xs text-muted-foreground break-all">
+            <p>User ID: {user.id}</p>
+            <p>Logged in: {session ? "Yes" : "No"}</p>
+          </div>
         </div>
       </div>
     </Layout>
