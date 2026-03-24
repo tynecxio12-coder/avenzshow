@@ -121,42 +121,56 @@ const returnContent = [
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <StoreProvider>
-      <TooltipProvider>
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/shop" element={<ShopPage />} />
-            <Route path="/product/:id" element={<ProductPage />} />
-            <Route path="/cart" element={<CartPage />} />
-            <Route path="/wishlist" element={<WishlistPage />} />
-            <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/account" element={<AccountPage />} />
-            <Route path="/faq" element={<FAQPage />} />
-            <Route path="/track-order" element={<TrackOrderPage />} />
-            <Route path="/privacy" element={<PolicyPage title="Privacy Policy" content={privacyContent} />} />
-            <Route path="/terms" element={<PolicyPage title="Terms & Conditions" content={termsContent} />} />
-            <Route path="/shipping-policy" element={<PolicyPage title="Shipping Policy" content={shippingContent} />} />
-            <Route path="/return-policy" element={<PolicyPage title="Return & Refund Policy" content={returnContent} />} />
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <StoreProvider>
+        <TooltipProvider>
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/shop" element={<ShopPage />} />
+              <Route path="/product/:id" element={<ProductPage />} />
+              <Route path="/cart" element={<CartPage />} />
+              <Route path="/wishlist" element={<WishlistPage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/account" element={<AccountPage />} />
+              <Route path="/faq" element={<FAQPage />} />
+              <Route path="/track-order" element={<TrackOrderPage />} />
+              <Route
+                path="/privacy"
+                element={<PolicyPage title="Privacy Policy" content={privacyContent} />}
+              />
+              <Route
+                path="/terms"
+                element={<PolicyPage title="Terms & Conditions" content={termsContent} />}
+              />
+              <Route
+                path="/shipping-policy"
+                element={<PolicyPage title="Shipping Policy" content={shippingContent} />}
+              />
+              <Route
+                path="/return-policy"
+                element={<PolicyPage title="Return & Refund Policy" content={returnContent} />}
+              />
 
-            {/* TEST ROUTE FOR SUPABASE */}
-            <Route path="/test-supabase" element={<TestSupabase />} />
+              {/* Supabase test route */}
+              <Route path="/test-supabase" element={<TestSupabase />} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </StoreProvider>
-  </QueryClientProvider>
-);
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </StoreProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
