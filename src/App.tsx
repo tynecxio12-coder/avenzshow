@@ -135,7 +135,10 @@ function App() {
               <Route path="/cart" element={<CartPage />} />
               <Route path="/wishlist" element={<WishlistPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
-              <Route path="/order-confirmation/:orderId" element={<OrderConfirmationPage />} />
+              <Route
+                path="/order-confirmation/:orderId"
+                element={<OrderConfirmationPage />}
+              />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
               <Route path="/login" element={<LoginPage />} />
@@ -146,24 +149,41 @@ function App() {
               <Route path="/track-order" element={<TrackOrderPage />} />
               <Route
                 path="/privacy"
-                element={<PolicyPage title="Privacy Policy" content={privacyContent} />}
+                element={
+                  <PolicyPage
+                    title="Privacy Policy"
+                    content={privacyContent}
+                  />
+                }
               />
               <Route
                 path="/terms"
-                element={<PolicyPage title="Terms & Conditions" content={termsContent} />}
+                element={
+                  <PolicyPage
+                    title="Terms & Conditions"
+                    content={termsContent}
+                  />
+                }
               />
               <Route
                 path="/shipping-policy"
-                element={<PolicyPage title="Shipping Policy" content={shippingContent} />}
+                element={
+                  <PolicyPage
+                    title="Shipping Policy"
+                    content={shippingContent}
+                  />
+                }
               />
               <Route
                 path="/return-policy"
-                element={<PolicyPage title="Return & Refund Policy" content={returnContent} />}
+                element={
+                  <PolicyPage
+                    title="Return & Refund Policy"
+                    content={returnContent}
+                  />
+                }
               />
-
-              {/* Supabase test route */}
               <Route path="/test-supabase" element={<TestSupabase />} />
-
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
