@@ -4,15 +4,16 @@ export default function TestSupabase() {
   const [result, setResult] = useState("Loading...");
 
   useEffect(() => {
-    const run = async () => {
+    const testDirectFetch = async () => {
       try {
         const url = import.meta.env.VITE_SUPABASE_URL;
         const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-        const res = await fetch(`${url}/rest/v1/`, {
+        const res = await fetch(`${url}/rest/v1/products?select=*`, {
           method: "GET",
           headers: {
             apikey: key,
+            Authorization: `Bearer ${key}`,
           },
         });
 
@@ -23,11 +24,11 @@ export default function TestSupabase() {
       }
     };
 
-    run();
+    testDirectFetch();
   }, []);
 
   return (
-    <div style={{ padding: "20px", color: "white" }}>
+    <div style={{ padding: "20px", color: "white", background: "#111", minHeight: "100vh" }}>
       <h1>Supabase Test</h1>
       <p>URL: {import.meta.env.VITE_SUPABASE_URL ? "Loaded" : "Missing"}</p>
       <p>KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? "Loaded" : "Missing"}</p>
