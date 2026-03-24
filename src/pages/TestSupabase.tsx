@@ -14,34 +14,32 @@ export default function TestSupabase() {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        console.log("Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
-        console.log("Supabase Key:", import.meta.env.VITE_SUPABASE_ANON_KEY);
+ useEffect(() => {
+  const testDirectFetch = async () => {
+    try {
+      const url = import.meta.env.VITE_SUPABASE_URL;
+      const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-        const { data, error } = await supabase
-          .from("products")
-          .select("id, name, price, image_url, brand");
+      const res = await fetch(`${url}/rest/v1/products?select=*`, {
+        method: "GET",
+        headers: {
+          apikey: key,
+          Authorization: `Bearer ${key}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-        console.log("DATA:", data);
-        console.log("ERROR:", error);
+      const text = await res.text();
+      setErrorMessage(`Status: ${res.status} | Body: ${text}`);
+    } catch (err: any) {
+      setErrorMessage(`Fetch error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (error) {
-          setErrorMessage(error.message);
-        } else {
-          setProducts(data || []);
-        }
-      } catch (err: any) {
-        console.error("CATCH ERROR:", err);
-        setErrorMessage(err.message || "Unknown fetch error");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProducts();
-  }, []);
+  testDirectFetch();
+}, []);
 
   return (
     <div style={{ color: "white", padding: "20px" }}>
