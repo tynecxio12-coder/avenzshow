@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import Layout from "@/components/layout/Layout";
-import { useAuth } from "@/contexts/AuthContext";
+import Layout from "../components/layout/Layout";
+import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ export default function LoginPage() {
     setLoading(true);
     setErrorMessage("");
 
-    const { error } = await signIn(email, password);
+    const { data, error } = await signIn(email, password);
 
     if (error) {
       setErrorMessage(error.message);
@@ -28,7 +28,14 @@ export default function LoginPage() {
       return;
     }
 
+    if (!data.session) {
+      setErrorMessage("Login succeeded but no session was created.");
+      setLoading(false);
+      return;
+    }
+
     navigate("/account");
+    setLoading(false);
   };
 
   return (
