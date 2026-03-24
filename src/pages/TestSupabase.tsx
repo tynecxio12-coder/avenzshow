@@ -16,60 +16,47 @@ export default function TestSupabase() {
 
   useEffect(() => {
     const fetchProducts = async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, price, image_url, brand");
+      try {
+        console.log("Supabase URL:", import.meta.env.VITE_SUPABASE_URL);
+        console.log("Supabase Key:", import.meta.env.VITE_SUPABASE_ANON_KEY);
 
-      console.log("DATA:", data);
-      console.log("ERROR:", error);
+        const { data, error } = await supabase
+          .from("products")
+          .select("id, name, price, image_url, brand");
 
-      if (error) {
-        setErrorMessage(error.message);
-      } else if (data) {
-        setProducts(data as Product[]);
+        console.log("DATA:", data);
+        console.log("ERROR:", error);
+
+        if (error) {
+          setErrorMessage(error.message);
+        } else {
+          setProducts(data || []);
+        }
+      } catch (err: any) {
+        console.error("CATCH ERROR:", err);
+        setErrorMessage(err.message || "Unknown fetch error");
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     };
 
     fetchProducts();
   }, []);
 
   return (
-    <div
-      style={{
-        padding: "20px",
-        color: "white",
-        background: "#111",
-        minHeight: "100vh",
-      }}
-    >
+    <div style={{ color: "white", padding: "20px" }}>
       <h1>Supabase Test</h1>
 
-      {loading && <p>Loading products...</p>}
+      <p>URL: {import.meta.env.VITE_SUPABASE_URL ? "Loaded" : "Missing"}</p>
+      <p>KEY: {import.meta.env.VITE_SUPABASE_ANON_KEY ? "Loaded" : "Missing"}</p>
+      <p>Project URL: {import.meta.env.VITE_SUPABASE_URL || "No URL"}</p>
 
+      {loading && <p>Loading...</p>}
       {errorMessage && <p style={{ color: "red" }}>Error: {errorMessage}</p>}
 
-      {!loading && !errorMessage && products.length === 0 && (
-        <p>No products found.</p>
+      {!loading && !errorMessage && (
+        <pre>{JSON.stringify(products, null, 2)}</pre>
       )}
-
-      {products.map((product) => (
-        <div key={product.id} style={{ marginBottom: "30px" }}>
-          <h2>{product.name}</h2>
-          <p>{product.brand || "No brand"}</p>
-          <p>৳ {product.price ?? 0}</p>
-
-          {product.image_url && (
-            <img
-              src={product.image_url}
-              alt={product.name}
-              width={250}
-              style={{ borderRadius: "12px" }}
-            />
-          )}
-        </div>
-      ))}
     </div>
   );
 }
