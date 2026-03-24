@@ -11,7 +11,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -21,6 +20,8 @@ export default function LoginPage() {
     setErrorMessage("");
 
     const { data, error } = await signIn(email, password);
+
+    console.log("LOGIN RESULT:", data, error);
 
     if (error) {
       setErrorMessage(error.message);
@@ -86,22 +87,6 @@ export default function LoginPage() {
                 {errorMessage}
               </div>
             )}
-
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4"
-                />
-                Remember me
-              </label>
-
-              <Link to="/forgot-password" className="text-gold hover:underline font-medium">
-                Forgot password?
-              </Link>
-            </div>
 
             <button
               type="submit"
