@@ -51,8 +51,8 @@ export default function Navbar() {
 
   return (
     <>
-      <div className="bg-primary text-primary-foreground text-xs py-2 text-center tracking-widest font-body uppercase">
-        Free shipping on orders over ৳5,000 | Use code <span className="text-gold font-semibold">AVENZ20</span> for 20% off
+      <div className="bg-[hsl(220,10%,9%)] text-foreground/70 text-xs py-2 text-center tracking-widest font-body uppercase border-b border-border/50">
+        Free shipping on orders over ৳5,000 | Use code <span className="text-gold-light font-semibold">AVENZ20</span> for 20% off
       </div>
 
       <header className={`sticky top-0 z-50 transition-all duration-300 ${scrolled ? 'bg-card/95 backdrop-blur-lg shadow-lg' : 'bg-card'}`}>
