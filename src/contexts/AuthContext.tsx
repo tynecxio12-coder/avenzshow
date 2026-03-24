@@ -19,11 +19,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getInitialSession = async () => {
+    const loadSession = async () => {
       const { data, error } = await supabase.auth.getSession();
 
       if (error) {
-        console.error("Get session error:", error.message);
+        console.error("Session load error:", error.message);
       }
 
       setSession(data.session ?? null);
@@ -31,19 +31,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     };
 
-    getInitialSession();
+    loadSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Auth event:", event, session);
       setSession(session ?? null);
       setUser(session?.user ?? null);
       setLoading(false);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, fullName?: string) => {
