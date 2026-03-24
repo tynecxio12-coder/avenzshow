@@ -65,8 +65,6 @@ export default {
           dark: "hsl(var(--cream-dark))",
         },
         "warm-gray": "hsl(var(--warm-gray))",
-        success: "hsl(var(--success))",
-        sale: "hsl(var(--sale))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",

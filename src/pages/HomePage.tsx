@@ -44,26 +44,25 @@ export default function HomePage() {
   return (
     <Layout>
       {/* Hero */}
-      <section className="relative h-[85vh] min-h-[600px] overflow-hidden bg-background">
+      <section className="relative h-[85vh] min-h-[600px] overflow-hidden">
         <div className="absolute inset-0">
-          <img src={heroBanner} alt="AvenzShoe Hero" className="w-full h-full object-cover opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[hsl(240,10%,4%)] via-[hsl(240,10%,4%,0.85)] to-transparent" />
-          <div className="absolute bottom-0 left-1/2 w-[600px] h-[400px] -translate-x-1/4 bg-[radial-gradient(ellipse,hsl(38,42%,49%,0.08)_0%,transparent_70%)]" />
+          <img src={heroBanner} alt="AvenzShoe Hero" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/60 to-transparent" />
         </div>
         <div className="relative h-full section-padding flex items-center">
           <motion.div initial={{ opacity: 0, x: -40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.8 }} className="max-w-xl">
-            <span className="text-gold-light text-xs uppercase tracking-[0.35em] font-semibold">New Collection 2025</span>
-            <h1 className="font-display text-5xl md:text-7xl font-bold text-foreground mt-4 leading-[1.1]">
+            <span className="text-gold text-sm uppercase tracking-[0.3em] font-semibold">New Collection 2025</span>
+            <h1 className="font-display text-5xl md:text-7xl font-bold text-primary-foreground mt-4 leading-[1.1]">
               Step Into <span className="text-gold-gradient">Elegance</span>
             </h1>
-            <p className="text-muted-foreground mt-6 text-lg leading-relaxed max-w-md">
+            <p className="text-primary-foreground/70 mt-6 text-lg leading-relaxed max-w-md">
               Discover premium footwear crafted for those who demand excellence. Every step tells a story of luxury.
             </p>
             <div className="flex flex-wrap gap-4 mt-8">
-              <Link to="/shop" className="px-8 py-3.5 bg-primary text-primary-foreground font-semibold uppercase text-sm tracking-widest rounded-lg hover:bg-gold-light transition-colors">
+              <Link to="/shop" className="px-8 py-3.5 gold-gradient text-primary font-semibold uppercase text-sm tracking-widest rounded-lg hover:opacity-90 transition-opacity">
                 Shop Now
               </Link>
-              <Link to="/shop?filter=new" className="px-8 py-3.5 border border-muted-foreground/30 text-foreground font-semibold uppercase text-sm tracking-widest rounded-lg hover:border-gold/50 hover:text-gold transition-colors">
+              <Link to="/shop?filter=new" className="px-8 py-3.5 border-2 border-primary-foreground/30 text-primary-foreground font-semibold uppercase text-sm tracking-widest rounded-lg hover:bg-primary-foreground/10 transition-colors">
                 New Arrivals
               </Link>
             </div>
