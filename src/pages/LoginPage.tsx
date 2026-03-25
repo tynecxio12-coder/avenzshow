@@ -6,7 +6,7 @@ import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { signIn, user, profileRole, loading, refreshProfileRole } = useAuth();
+  const { signIn, user, profileRole, loading, roleLoading, refreshProfileRole } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,7 +15,7 @@ export default function LoginPage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || roleLoading) return;
     if (!user) return;
 
     if (profileRole === "admin") {
@@ -23,7 +23,7 @@ export default function LoginPage() {
     } else if (profileRole === "customer") {
       navigate("/account", { replace: true });
     }
-  }, [user, profileRole, loading, navigate]);
+  }, [user, profileRole, loading, roleLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,8 +31,6 @@ export default function LoginPage() {
     setErrorMessage("");
 
     const { data, error } = await signIn(email, password);
-
-    console.log("LOGIN RESULT:", data, error);
 
     if (error) {
       setErrorMessage(error.message);
