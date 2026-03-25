@@ -8,6 +8,7 @@ type AuthContextType = {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  roleLoading: boolean;
   profileRole: UserRole;
   signUp: (email: string, password: string, fullName?: string) => Promise<any>;
   signIn: (email: string, password: string) => Promise<any>;
@@ -21,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
   const [profileRole, setProfileRole] = useState<UserRole>(null);
 
   const fetchProfileRole = async (userId?: string): Promise<UserRole> => {
@@ -29,73 +31,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return null;
     }
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle();
+    setRoleLoading(true);
 
-    if (error) {
-      console.error("Profile role load error:", error.message);
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Profile role load error:", error.message);
+        setProfileRole("customer");
+        return "customer";
+      }
+
+      const role: UserRole = data?.role === "admin" ? "admin" : "customer";
+      setProfileRole(role);
+      return role;
+    } catch (error) {
+      console.error("Unexpected profile role error:", error);
       setProfileRole("customer");
       return "customer";
+    } finally {
+      setRoleLoading(false);
     }
-
-    const role = data?.role === "admin" ? "admin" : "customer";
-    setProfileRole(role);
-    return role;
   };
 
   useEffect(() => {
     let mounted = true;
 
     const loadSession = async () => {
-      const { data, error } = await supabase.auth.getSession();
+      try {
+        const { data, error } = await supabase.auth.getSession();
 
-      if (error) {
-        console.error("Session load error:", error.message);
-      }
+        if (error) {
+          console.error("Session load error:", error.message);
+        }
 
-      if (!mounted) return;
+        if (!mounted) return;
 
-      const currentSession = data.session ?? null;
-      const currentUser = currentSession?.user ?? null;
+        const currentSession = data.session ?? null;
+        const currentUser = currentSession?.user ?? null;
 
-      setSession(currentSession);
-      setUser(currentUser);
+        setSession(currentSession);
+        setUser(currentUser);
 
-      if (currentUser?.id) {
-        await fetchProfileRole(currentUser.id);
-      } else {
+        // Important: stop auth loading immediately
+        setLoading(false);
+
+        // Load role in background
+        if (currentUser?.id) {
+          fetchProfileRole(currentUser.id);
+        } else {
+          setProfileRole(null);
+        }
+      } catch (error) {
+        console.error("Auth load failed:", error);
+        if (!mounted) return;
+        setSession(null);
+        setUser(null);
         setProfileRole(null);
+        setLoading(false);
       }
-
-      if (!mounted) return;
-      setLoading(false);
     };
 
     loadSession();
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("Auth event:", event, session);
-
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!mounted) return;
 
       const currentUser = session?.user ?? null;
 
       setSession(session ?? null);
       setUser(currentUser);
+      setLoading(false);
 
       if (currentUser?.id) {
-        await fetchProfileRole(currentUser.id);
+        fetchProfileRole(currentUser.id);
       } else {
         setProfileRole(null);
+        setRoleLoading(false);
       }
-
-      if (!mounted) return;
-      setLoading(false);
     });
 
     return () => {
@@ -126,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfileRole(null);
+    setRoleLoading(false);
   };
 
   return (
@@ -134,6 +154,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         session,
         loading,
+        roleLoading,
         profileRole,
         signUp,
         signIn,
