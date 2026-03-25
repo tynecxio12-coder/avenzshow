@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Layout from "../components/layout/Layout";
@@ -6,17 +6,28 @@ import { useAuth } from "../contexts/AuthContext";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, user, profileRole, loading, refreshProfileRole } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    if (loading) return;
+    if (!user) return;
+
+    if (profileRole === "admin") {
+      navigate("/admin/orders", { replace: true });
+    } else if (profileRole === "customer") {
+      navigate("/account", { replace: true });
+    }
+  }, [user, profileRole, loading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSubmitting(true);
     setErrorMessage("");
 
     const { data, error } = await signIn(email, password);
@@ -25,18 +36,25 @@ export default function LoginPage() {
 
     if (error) {
       setErrorMessage(error.message);
-      setLoading(false);
+      setSubmitting(false);
       return;
     }
 
-    if (!data.session) {
+    if (!data.session?.user) {
       setErrorMessage("Login succeeded but no session was created.");
-      setLoading(false);
+      setSubmitting(false);
       return;
     }
 
-    navigate("/account");
-    setLoading(false);
+    const role = await refreshProfileRole(data.session.user.id);
+
+    if (role === "admin") {
+      navigate("/admin/orders", { replace: true });
+    } else {
+      navigate("/account", { replace: true });
+    }
+
+    setSubmitting(false);
   };
 
   return (
@@ -90,10 +108,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={submitting}
               className="w-full h-14 rounded-xl gold-gradient text-primary font-bold tracking-[0.18em] uppercase text-base hover:opacity-90 transition disabled:opacity-60"
             >
-              {loading ? "Signing In..." : "Sign In"}
+              {submitting ? "Signing In..." : "Sign In"}
             </button>
           </form>
 
