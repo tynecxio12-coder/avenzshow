@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -14,6 +14,8 @@ import {
 
 export default function MyOrdersPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,7 +56,8 @@ export default function MyOrdersPage() {
             {orders.map((order) => (
               <div
                 key={order.id}
-                className="border rounded-2xl p-6 bg-card flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4"
+                onClick={() => navigate(`/track-order?orderId=${order.id}`)}
+                className="cursor-pointer border rounded-2xl p-6 bg-card flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 transition hover:shadow-md hover:border-primary/30"
               >
                 <div>
                   <p className="text-sm text-muted-foreground">Order Number</p>
@@ -65,12 +68,23 @@ export default function MyOrdersPage() {
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  <span className={`px-3 py-1 rounded-full border text-sm font-semibold ${getOrderStatusColor(order.status)}`}>
-                    {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] || order.status}
+                  <span
+                    className={`px-3 py-1 rounded-full border text-sm font-semibold ${getOrderStatusColor(
+                      order.status
+                    )}`}
+                  >
+                    {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] ||
+                      order.status}
                   </span>
 
-                  <span className={`px-3 py-1 rounded-full border text-sm font-semibold ${getPaymentStatusColor(order.payment_status)}`}>
-                    {PAYMENT_STATUS_LABELS[order.payment_status as keyof typeof PAYMENT_STATUS_LABELS] || order.payment_status}
+                  <span
+                    className={`px-3 py-1 rounded-full border text-sm font-semibold ${getPaymentStatusColor(
+                      order.payment_status
+                    )}`}
+                  >
+                    {PAYMENT_STATUS_LABELS[
+                      order.payment_status as keyof typeof PAYMENT_STATUS_LABELS
+                    ] || order.payment_status}
                   </span>
                 </div>
 
@@ -79,7 +93,10 @@ export default function MyOrdersPage() {
                   <p className="font-bold">{formatPrice(order.total_amount)}</p>
                 </div>
 
-                <div className="flex gap-3">
+                <div
+                  className="flex gap-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <Link
                     to={`/order-confirmation/${order.id}`}
                     className="px-4 py-2 rounded-lg border font-semibold"
