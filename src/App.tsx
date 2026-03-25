@@ -3,7 +3,7 @@ import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/contexts/StoreContext";
-import { useAuth } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -26,6 +26,11 @@ import TrackOrderPage from "./pages/TrackOrderPage";
 import PolicyPage from "./pages/PolicyPage";
 import NotFound from "./pages/NotFound";
 import TestSupabase from "./pages/TestSupabase";
+
+import MyOrdersPage from "./pages/MyOrdersPage";
+import AdminOrdersPage from "./pages/AdminOrdersPage";
+import AdminOrderDetailsPage from "./pages/AdminOrderDetailsPage";
+import AdminRoute from "@/components/routes/AdminRoute";
 
 const privacyContent = [
   {
@@ -147,82 +152,118 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AppRoutes() {
+  return (
+    <>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/shop" element={<ShopPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+
+        <Route
+          path="/checkout"
+          element={
+            <ProtectedRoute>
+              <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/order-confirmation/:orderId"
+          element={
+            <ProtectedRoute>
+              <OrderConfirmationPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute>
+              <AccountPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/account/orders"
+          element={
+            <ProtectedRoute>
+              <MyOrdersPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/track-order" element={<TrackOrderPage />} />
+
+        <Route
+          path="/admin/orders"
+          element={
+            <AdminRoute>
+              <AdminOrdersPage />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/admin/orders/:orderId"
+          element={
+            <AdminRoute>
+              <AdminOrderDetailsPage />
+            </AdminRoute>
+          }
+        />
+
+        <Route
+          path="/privacy"
+          element={<PolicyPage title="Privacy Policy" content={privacyContent} />}
+        />
+        <Route
+          path="/terms"
+          element={<PolicyPage title="Terms & Conditions" content={termsContent} />}
+        />
+        <Route
+          path="/shipping-policy"
+          element={<PolicyPage title="Shipping Policy" content={shippingContent} />}
+        />
+        <Route
+          path="/return-policy"
+          element={<PolicyPage title="Return & Refund Policy" content={returnContent} />}
+        />
+
+        <Route path="/test-supabase" element={<TestSupabase />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </>
+  );
+}
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <StoreProvider>
-        <TooltipProvider>
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/shop" element={<ShopPage />} />
-              <Route path="/product/:id" element={<ProductPage />} />
-              <Route path="/cart" element={<CartPage />} />
-              <Route path="/wishlist" element={<WishlistPage />} />
-              <Route path="/checkout" element={<CheckoutPage />} />
-              <Route
-                path="/order-confirmation/:orderId"
-                element={<OrderConfirmationPage />}
-              />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/contact" element={<ContactPage />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignUpPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route
-  path="/account"
-  element={
-    <ProtectedRoute>
-      <AccountPage />
-    </ProtectedRoute>
-  }
-/>
-              <Route path="/faq" element={<FAQPage />} />
-              <Route path="/track-order" element={<TrackOrderPage />} />
-              <Route
-                path="/privacy"
-                element={
-                  <PolicyPage
-                    title="Privacy Policy"
-                    content={privacyContent}
-                  />
-                }
-              />
-              <Route
-                path="/terms"
-                element={
-                  <PolicyPage
-                    title="Terms & Conditions"
-                    content={termsContent}
-                  />
-                }
-              />
-              <Route
-                path="/shipping-policy"
-                element={
-                  <PolicyPage
-                    title="Shipping Policy"
-                    content={shippingContent}
-                  />
-                }
-              />
-              <Route
-                path="/return-policy"
-                element={
-                  <PolicyPage
-                    title="Return & Refund Policy"
-                    content={returnContent}
-                  />
-                }
-              />
-              <Route path="/test-supabase" element={<TestSupabase />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </StoreProvider>
+      <AuthProvider>
+        <StoreProvider>
+          <TooltipProvider>
+            <Sonner />
+            <BrowserRouter>
+              <Navbar />
+              <AppRoutes />
+              <Footer />
+            </BrowserRouter>
+          </TooltipProvider>
+        </StoreProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }
