@@ -1,69 +1,162 @@
-import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { CheckCircle, Package, ArrowRight } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
-import { useStore } from '@/contexts/StoreContext';
-import { formatPrice } from '@/lib/currency';
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { CheckCircle2, Package, Truck } from "lucide-react";
+import Layout from "@/components/layout/Layout";
+import { supabase } from "@/lib/supabase";
+import { formatPrice } from "@/lib/currency";
+import { OrderItemRow, OrderRow } from "@/types/order";
+import { PAYMENT_STATUS_LABELS, ORDER_STATUS_LABELS } from "@/lib/orderStatus";
 
 export default function OrderConfirmationPage() {
   const { orderId } = useParams();
-  const { orders } = useStore();
-  const order = orders.find(o => o.id === orderId);
+  const [order, setOrder] = useState<OrderRow | null>(null);
+  const [items, setItems] = useState<OrderItemRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadOrder = async () => {
+      if (!orderId) return;
+
+      setLoading(true);
+
+      const [{ data: orderData }, { data: itemData }] = await Promise.all([
+        supabase.from("orders").select("*").eq("id", orderId).maybeSingle(),
+        supabase.from("order_items").select("*").eq("order_id", orderId),
+      ]);
+
+      setOrder(orderData as OrderRow | null);
+      setItems((itemData as OrderItemRow[]) || []);
+      setLoading(false);
+    };
+
+    loadOrder();
+  }, [orderId]);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="container py-24 text-center">Loading order...</div>
+      </Layout>
+    );
+  }
+
+  if (!order) {
+    return (
+      <Layout>
+        <div className="container py-24 text-center">
+          <h1 className="text-3xl font-bold mb-3">Order not found</h1>
+          <Link to="/" className="text-primary font-semibold">
+            Go Home
+          </Link>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
-      <div className="section-padding py-16 text-center">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5 }}>
-          <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-6">
-            <CheckCircle className="w-10 h-10 text-green-600" />
+      <div className="container py-12 max-w-5xl">
+        <div className="bg-card border rounded-2xl p-8 mb-8">
+          <div className="flex items-start gap-4">
+            <CheckCircle2 className="w-12 h-12 text-green-600" />
+            <div>
+              <h1 className="text-3xl font-bold">Order Confirmed</h1>
+              <p className="text-muted-foreground mt-2">
+                Thank you for your order. We have received it successfully.
+              </p>
+              <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div className="p-4 border rounded-xl">
+                  <p className="text-muted-foreground">Order Number</p>
+                  <p className="font-bold">{order.order_number || order.id}</p>
+                </div>
+                <div className="p-4 border rounded-xl">
+                  <p className="text-muted-foreground">Order Status</p>
+                  <p className="font-bold">{ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] || order.status}</p>
+                </div>
+                <div className="p-4 border rounded-xl">
+                  <p className="text-muted-foreground">Payment Status</p>
+                  <p className="font-bold">{PAYMENT_STATUS_LABELS[order.payment_status as keyof typeof PAYMENT_STATUS_LABELS] || order.payment_status}</p>
+                </div>
+                <div className="p-4 border rounded-xl">
+                  <p className="text-muted-foreground">Payment Method</p>
+                  <p className="font-bold">{order.payment_method}</p>
+                </div>
+              </div>
+            </div>
           </div>
-          <h1 className="font-display text-3xl md:text-4xl font-bold">Order Confirmed!</h1>
-          <p className="text-muted-foreground mt-3 max-w-md mx-auto">
-            Thank you for shopping with AvenzShoe. Your order has been placed successfully.
-          </p>
+        </div>
 
-          <div className="mt-8 bg-card rounded-xl border border-border p-6 max-w-lg mx-auto text-left">
-            <div className="flex items-center gap-3 mb-4">
-              <Package className="w-5 h-5 text-gold" />
-              <span className="font-display font-bold text-lg">Order #{orderId}</span>
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 bg-card border rounded-2xl p-6">
+            <h2 className="text-xl font-bold mb-4">Ordered Items</h2>
+            <div className="space-y-4">
+              {items.map((item) => (
+                <div key={item.id} className="flex gap-4 border rounded-xl p-4">
+                  <img
+                    src={item.product_image || "/placeholder.svg"}
+                    alt={item.product_name}
+                    className="w-20 h-20 object-cover rounded-lg"
+                  />
+                  <div className="flex-1">
+                    <p className="font-semibold">{item.product_name}</p>
+                    <p className="text-sm text-muted-foreground">Size: {item.size || "N/A"}</p>
+                    <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                  </div>
+                  <p className="font-bold">{formatPrice(item.total_price)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-card border rounded-2xl p-6">
+              <h2 className="text-lg font-bold mb-4">Shipping Details</h2>
+              <p className="font-semibold">{order.full_name}</p>
+              <p className="text-sm text-muted-foreground">{order.email}</p>
+              <p className="text-sm text-muted-foreground">{order.phone}</p>
+              <p className="text-sm mt-3">{order.address}</p>
             </div>
 
-            {order && (
-              <>
-                <div className="space-y-3 mb-4">
-                  {order.items.map(item => (
-                    <div key={`${item.product.id}-${item.selectedSize}-${item.selectedColor}`} className="flex items-center gap-3">
-                      <img src={item.product.images[0]} alt="" className="w-12 h-12 rounded-lg object-cover" />
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold">{item.product.name}</p>
-                        <p className="text-xs text-muted-foreground">Size: {item.selectedSize} · Color: {item.selectedColor} · Qty: {item.quantity}</p>
-                      </div>
-                      <span className="text-sm font-semibold">{formatPrice(item.product.price * item.quantity)}</span>
-                    </div>
-                  ))}
+            <div className="bg-card border rounded-2xl p-6">
+              <h2 className="text-lg font-bold mb-4">Order Summary</h2>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span>Subtotal</span>
+                  <span>{formatPrice(order.subtotal)}</span>
                 </div>
-                <div className="border-t border-border pt-3 space-y-1 text-sm">
-                  <div className="flex justify-between"><span className="text-muted-foreground">Delivery</span><span className="capitalize">{order.delivery}</span></div>
-                  <div className="flex justify-between"><span className="text-muted-foreground">Payment</span><span className="capitalize">{order.payment}</span></div>
-                  <div className="flex justify-between font-bold text-base pt-2 border-t border-border mt-2"><span>Total</span><span>{formatPrice(order.total)}</span></div>
+                <div className="flex justify-between">
+                  <span>Discount</span>
+                  <span>-{formatPrice(order.discount)}</span>
                 </div>
-              </>
-            )}
-          </div>
+                <div className="flex justify-between">
+                  <span>Delivery</span>
+                  <span>{formatPrice(order.delivery_charge)}</span>
+                </div>
+                <div className="flex justify-between font-bold text-base border-t pt-3">
+                  <span>Total</span>
+                  <span>{formatPrice(order.total_amount)}</span>
+                </div>
+              </div>
+            </div>
 
-          <p className="text-sm text-muted-foreground mt-6">
-            A confirmation SMS/email will be sent shortly. You can track your order using the order ID.
-          </p>
-
-          <div className="flex flex-wrap gap-4 justify-center mt-8">
-            <Link to="/track-order" className="px-6 py-3 border border-border rounded-lg text-sm font-semibold uppercase tracking-wide hover:bg-muted transition-colors">
-              Track Order
-            </Link>
-            <Link to="/shop" className="px-6 py-3 gold-gradient text-primary rounded-lg font-semibold text-sm uppercase tracking-widest hover:opacity-90 transition-opacity flex items-center gap-2">
-              Continue Shopping <ArrowRight className="w-4 h-4" />
-            </Link>
+            <div className="bg-card border rounded-2xl p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <Package className="w-5 h-5" />
+                <h2 className="font-bold">Next Steps</h2>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                You can track your order anytime from the tracking page.
+              </p>
+              <Link
+                to={`/track-order?orderId=${order.id}`}
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 font-semibold text-primary-foreground"
+              >
+                <Truck className="w-4 h-4" />
+                Track Order
+              </Link>
+            </div>
           </div>
-        </motion.div>
+        </div>
       </div>
     </Layout>
   );
