@@ -199,23 +199,8 @@ function AppRoutes() {
       <Route path="/faq" element={<FAQPage />} />
       <Route path="/track-order" element={<TrackOrderPage />} />
 
-      <Route
-        path="/admin/orders"
-        element={
-          <AdminRoute>
-            <AdminOrdersPage />
-          </AdminRoute>
-        }
-      />
-
-      <Route
-        path="/admin/orders/:orderId"
-        element={
-          <AdminRoute>
-            <AdminOrderDetailsPage />
-          </AdminRoute>
-        }
-      />
+      <Route path="/admin/orders" element={<AdminOrdersPage />} />
+<Route path="/admin/orders/:orderId" element={<AdminOrderDetailsPage />} />
 
       <Route
         path="/privacy"
