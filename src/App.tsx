@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 import HomePage from "./pages/HomePage";
 import ShopPage from "./pages/ShopPage";
@@ -145,6 +147,54 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function SmartAccountRoute() {
+  const { user, loading } = useAuth();
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) {
+        setCheckingRole(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Smart account role check error:", error.message);
+      }
+
+      setIsAdmin(data?.role === "admin");
+      setCheckingRole(false);
+    };
+
+    checkRole();
+  }, [user]);
+
+  if (loading || checkingRole) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center text-lg">
+        Loading...
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (isAdmin) {
+    return <Navigate to="/admin/orders" replace />;
+  }
+
+  return <AccountPage />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -182,7 +232,7 @@ function AppRoutes() {
         path="/account"
         element={
           <ProtectedRoute>
-            <AccountPage />
+            <SmartAccountRoute />
           </ProtectedRoute>
         }
       />
@@ -198,15 +248,6 @@ function AppRoutes() {
 
       <Route path="/faq" element={<FAQPage />} />
       <Route path="/track-order" element={<TrackOrderPage />} />
-
-      <Route
-        path="/admin"
-        element={
-          <AdminRoute>
-            <Navigate to="/admin/orders" replace />
-          </AdminRoute>
-        }
-      />
 
       <Route
         path="/admin/orders"
