@@ -24,22 +24,42 @@ import {
   buildTrackingTitle,
 } from "@/lib/orderStatus";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
-const TRACKABLE_STEPS = ORDER_STATUSES.filter(
-  (status) => status !== "cancelled"
-);
+const TRACKABLE_STEPS = ORDER_STATUSES.filter((status) => status !== "cancelled");
 
 export default function TrackOrderPage() {
-  const [params] = useSearchParams();
+  const { user } = useAuth();
+  const [params, setParams] = useSearchParams();
+
   const [orderId, setOrderId] = useState(params.get("orderId") || "");
   const [contact, setContact] = useState("");
   const [loading, setLoading] = useState(false);
   const [order, setOrder] = useState<OrderRow | null>(null);
   const [items, setItems] = useState<OrderItemRow[]>([]);
   const [history, setHistory] = useState<TrackingRow[]>([]);
+  const [userOrders, setUserOrders] = useState<OrderRow[]>([]);
 
-  const searchOrder = async () => {
-    if (!orderId.trim()) {
+  useEffect(() => {
+    const loadUserOrders = async () => {
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setUserOrders((data as OrderRow[]) || []);
+    };
+
+    loadUserOrders();
+  }, [user]);
+
+  const searchOrder = async (customOrderId?: string) => {
+    const finalOrderId = (customOrderId ?? orderId).trim();
+
+    if (!finalOrderId) {
       toast.error("Please enter your order ID");
       return;
     }
@@ -53,7 +73,7 @@ export default function TrackOrderPage() {
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select("*")
-        .or(`id.eq.${orderId},order_number.eq.${orderId}`)
+        .or(`id.eq.${finalOrderId},order_number.eq.${finalOrderId}`)
         .maybeSingle();
 
       if (orderError) throw orderError;
@@ -85,6 +105,8 @@ export default function TrackOrderPage() {
       setOrder(orderData as OrderRow);
       setItems((itemData as OrderItemRow[]) || []);
       setHistory((trackingData as TrackingRow[]) || []);
+      setOrderId(orderData.id);
+      setParams({ orderId: orderData.id });
     } catch (error: any) {
       toast.error(error.message || "Failed to track order");
     } finally {
@@ -93,8 +115,10 @@ export default function TrackOrderPage() {
   };
 
   useEffect(() => {
-    if (params.get("orderId")) {
-      searchOrder();
+    const q = params.get("orderId");
+    if (q) {
+      setOrderId(q);
+      searchOrder(q);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -107,7 +131,6 @@ export default function TrackOrderPage() {
 
   const enrichedHistory = useMemo(() => {
     if (!order) return [];
-
     if (history.length > 0) return history;
 
     return [
@@ -147,10 +170,40 @@ export default function TrackOrderPage() {
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-3">Track Your Order</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Enter your order ID or order number to view delivery updates,
+            Enter your order ID or choose one of your recent orders to view delivery updates,
             tracking history, order items, and estimated delivery information.
           </p>
         </div>
+
+        {user && userOrders.length > 0 && (
+          <div className="bg-card border rounded-[28px] p-6 md:p-7 mb-8">
+            <h2 className="text-xl font-bold mb-4">Your Recent Orders</h2>
+            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {userOrders.map((userOrder) => (
+                <button
+                  key={userOrder.id}
+                  onClick={() => searchOrder(userOrder.id)}
+                  className="text-left rounded-2xl border p-4 bg-background hover:border-primary/30 hover:shadow-sm transition"
+                >
+                  <p className="text-sm text-muted-foreground">Order Number</p>
+                  <p className="font-bold mt-1">{userOrder.order_number || userOrder.id}</p>
+                  <div className="flex items-center justify-between gap-3 mt-3">
+                    <span
+                      className={`px-3 py-1 rounded-full border text-xs font-semibold ${getOrderStatusColor(
+                        userOrder.status
+                      )}`}
+                    >
+                      {ORDER_STATUS_LABELS[
+                        userOrder.status as keyof typeof ORDER_STATUS_LABELS
+                      ] || userOrder.status}
+                    </span>
+                    <span className="font-semibold">{formatPrice(userOrder.total_amount)}</span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="bg-card border rounded-[28px] p-6 md:p-7 mb-8 shadow-sm">
           <div className="grid md:grid-cols-3 gap-4">
@@ -167,7 +220,7 @@ export default function TrackOrderPage() {
               className="px-4 py-3 rounded-2xl border bg-background outline-none"
             />
             <button
-              onClick={searchOrder}
+              onClick={() => searchOrder()}
               disabled={loading}
               className="inline-flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 font-semibold text-primary-foreground"
             >
@@ -181,7 +234,7 @@ export default function TrackOrderPage() {
           <div className="rounded-[28px] border border-dashed border-border bg-card p-10 text-center">
             <h2 className="text-2xl font-bold mb-2">No order selected yet</h2>
             <p className="text-muted-foreground">
-              Search using your order ID to view live order progress.
+              Search using your order ID or click one of your recent orders above.
             </p>
           </div>
         )}
@@ -251,11 +304,7 @@ export default function TrackOrderPage() {
                             <Clock3 className="w-5 h-5" />
                           )}
                         </div>
-                        <p
-                          className={`text-sm font-medium ${
-                            current ? "text-primary" : "text-foreground"
-                          }`}
-                        >
+                        <p className={`text-sm font-medium ${current ? "text-primary" : "text-foreground"}`}>
                           {ORDER_STATUS_LABELS[step]}
                         </p>
                       </div>
@@ -308,56 +357,50 @@ export default function TrackOrderPage() {
                   <h3 className="text-xl font-bold">Tracking Timeline</h3>
                 </div>
 
-                {enrichedHistory.length === 0 ? (
-                  <p className="text-muted-foreground">No tracking updates yet.</p>
-                ) : (
-                  <div className="space-y-6">
-                    {enrichedHistory.map((step, index) => (
-                      <div key={step.id} className="flex gap-4">
-                        <div className="flex flex-col items-center">
-                          <div className="w-4 h-4 rounded-full bg-primary mt-1" />
-                          {index !== enrichedHistory.length - 1 && (
-                            <div className="w-px flex-1 bg-border mt-2" />
-                          )}
+                <div className="space-y-6">
+                  {enrichedHistory.map((step, index) => (
+                    <div key={step.id} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="w-4 h-4 rounded-full bg-primary mt-1" />
+                        {index !== enrichedHistory.length - 1 && (
+                          <div className="w-px flex-1 bg-border mt-2" />
+                        )}
+                      </div>
+
+                      <div className="pb-2 flex-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <p className="font-semibold">{step.title}</p>
+                          <span
+                            className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium border ${getOrderStatusColor(
+                              step.status
+                            )}`}
+                          >
+                            {ORDER_STATUS_LABELS[
+                              step.status as keyof typeof ORDER_STATUS_LABELS
+                            ] || step.status}
+                          </span>
                         </div>
 
-                        <div className="pb-2 flex-1">
-                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                            <p className="font-semibold">{step.title}</p>
-                            <span
-                              className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-medium border ${getOrderStatusColor(
-                                step.status
-                              )}`}
-                            >
-                              {ORDER_STATUS_LABELS[
-                                step.status as keyof typeof ORDER_STATUS_LABELS
-                              ] || step.status}
-                            </span>
-                          </div>
+                        {step.description && (
+                          <p className="text-sm text-muted-foreground mt-2">{step.description}</p>
+                        )}
 
-                          {step.description && (
-                            <p className="text-sm text-muted-foreground mt-2">
-                              {step.description}
-                            </p>
+                        <div className="text-xs text-muted-foreground mt-3 flex flex-wrap gap-2 items-center">
+                          <span>{new Date(step.created_at).toLocaleString()}</span>
+                          {step.location && (
+                            <>
+                              <span>•</span>
+                              <span className="inline-flex items-center gap-1">
+                                <MapPin className="w-3.5 h-3.5" />
+                                {step.location}
+                              </span>
+                            </>
                           )}
-
-                          <div className="text-xs text-muted-foreground mt-3 flex flex-wrap gap-2 items-center">
-                            <span>{new Date(step.created_at).toLocaleString()}</span>
-                            {step.location && (
-                              <>
-                                <span>•</span>
-                                <span className="inline-flex items-center gap-1">
-                                  <MapPin className="w-3.5 h-3.5" />
-                                  {step.location}
-                                </span>
-                              </>
-                            )}
-                          </div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="lg:col-span-2 space-y-6">
@@ -414,10 +457,10 @@ export default function TrackOrderPage() {
                     You can also review your complete order list from your account dashboard.
                   </p>
                   <Link
-                    to="/account"
+                    to="/account/orders"
                     className="inline-flex items-center justify-center rounded-2xl border px-4 py-2.5 font-semibold"
                   >
-                    Go to My Account
+                    Go to My Orders
                   </Link>
                 </div>
               </div>
