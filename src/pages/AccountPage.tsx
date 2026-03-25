@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import {
   User,
   Package,
@@ -11,6 +11,8 @@ import {
   Truck,
   Clock3,
   CheckCircle2,
+  LocateFixed,
+  ArrowRight,
 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,6 +23,7 @@ import { toast } from "sonner";
 
 type OrderRow = {
   id: string;
+  order_number?: string | null;
   created_at?: string;
   status?: string;
   total_amount?: number;
@@ -28,9 +31,71 @@ type OrderRow = {
   email?: string;
   phone?: string;
   address?: string;
+  tracking_number?: string | null;
+  courier_name?: string | null;
+  estimated_delivery?: string | null;
 };
 
-type TabType = "overview" | "orders" | "addresses" | "wishlist" | "settings";
+type TabType =
+  | "overview"
+  | "orders"
+  | "tracking"
+  | "addresses"
+  | "wishlist"
+  | "settings";
+
+const statusLabel = (status?: string) => {
+  if (!status) return "Pending";
+
+  switch (status.toLowerCase()) {
+    case "pending":
+      return "Pending";
+    case "confirmed":
+      return "Confirmed";
+    case "packed":
+      return "Packed";
+    case "shipped":
+      return "Shipped";
+    case "out_for_delivery":
+      return "Out for delivery";
+    case "delivered":
+      return "Delivered";
+    case "cancelled":
+      return "Cancelled";
+    default:
+      return status.replace(/_/g, " ");
+  }
+};
+
+const statusClasses = (status?: string) => {
+  switch ((status || "").toLowerCase()) {
+    case "pending":
+      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    case "confirmed":
+      return "bg-blue-100 text-blue-800 border-blue-200";
+    case "packed":
+      return "bg-indigo-100 text-indigo-800 border-indigo-200";
+    case "shipped":
+      return "bg-purple-100 text-purple-800 border-purple-200";
+    case "out_for_delivery":
+      return "bg-orange-100 text-orange-800 border-orange-200";
+    case "delivered":
+      return "bg-green-100 text-green-800 border-green-200";
+    case "cancelled":
+      return "bg-red-100 text-red-800 border-red-200";
+    default:
+      return "bg-muted text-foreground border-border";
+  }
+};
+
+const trackingSteps = [
+  "pending",
+  "confirmed",
+  "packed",
+  "shipped",
+  "out_for_delivery",
+  "delivered",
+];
 
 export default function AccountPage() {
   const { user, loading, signOut } = useAuth();
@@ -108,9 +173,15 @@ export default function AccountPage() {
   const latestAddress =
     orders.find((o) => o.address)?.address || "No saved address yet";
 
+  const latestOrder = orders[0] || null;
+
   const memberSince = user?.created_at
     ? new Date(user.created_at).toLocaleDateString()
     : "N/A";
+
+  const latestTrackingStepIndex = latestOrder?.status
+    ? Math.max(trackingSteps.indexOf(latestOrder.status.toLowerCase()), 0)
+    : 0;
 
   const handleLogout = async () => {
     await signOut();
@@ -136,6 +207,7 @@ export default function AccountPage() {
   const tabs = [
     { id: "overview", label: "Overview", icon: User },
     { id: "orders", label: "Orders", icon: Package },
+    { id: "tracking", label: "Track Order", icon: LocateFixed },
     { id: "addresses", label: "Addresses", icon: MapPin },
     { id: "wishlist", label: "Wishlist", icon: Heart },
     { id: "settings", label: "Settings", icon: Settings },
@@ -247,9 +319,96 @@ export default function AccountPage() {
                     <InfoBox
                       icon={<Package className="w-5 h-5" />}
                       title="Recent Order Status"
-                      value={orders[0]?.status || "No recent orders"}
+                      value={latestOrder ? statusLabel(latestOrder.status) : "No recent orders"}
                     />
                   </div>
+
+                  {latestOrder && (
+                    <div className="rounded-[28px] border border-border bg-background p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+                        <div>
+                          <p className="text-sm text-muted-foreground">
+                            Latest Order Tracking
+                          </p>
+                          <h3 className="font-display text-2xl font-bold text-primary mt-1">
+                            #{latestOrder.order_number || latestOrder.id.slice(0, 8)}
+                          </h3>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span
+                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold border ${statusClasses(
+                              latestOrder.status
+                            )}`}
+                          >
+                            {statusLabel(latestOrder.status)}
+                          </span>
+
+                          <Link
+                            to={`/track-order?orderId=${latestOrder.id}`}
+                            className="inline-flex items-center gap-2 h-11 px-4 rounded-2xl bg-primary text-primary-foreground font-semibold"
+                          >
+                            Track now
+                            <ArrowRight className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-3 gap-4 mb-6">
+                        <MiniInfoCard
+                          title="Courier"
+                          value={latestOrder.courier_name || "Not assigned yet"}
+                        />
+                        <MiniInfoCard
+                          title="Tracking Number"
+                          value={latestOrder.tracking_number || "Not available yet"}
+                        />
+                        <MiniInfoCard
+                          title="Estimated Delivery"
+                          value={latestOrder.estimated_delivery || "Will be updated"}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+                        {trackingSteps.map((step, index) => {
+                          const completed = index <= latestTrackingStepIndex;
+                          const current = index === latestTrackingStepIndex;
+
+                          return (
+                            <div
+                              key={step}
+                              className={`rounded-2xl border p-4 text-center transition-all ${
+                                completed
+                                  ? "border-primary/20 bg-primary/5"
+                                  : "border-border bg-card"
+                              }`}
+                            >
+                              <div
+                                className={`mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                                  completed
+                                    ? "bg-primary text-primary-foreground"
+                                    : "bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                {completed ? (
+                                  <CheckCircle2 className="w-5 h-5" />
+                                ) : (
+                                  <Clock3 className="w-5 h-5" />
+                                )}
+                              </div>
+                              <p
+                                className={`text-sm font-medium ${
+                                  current ? "text-primary" : "text-foreground"
+                                }`}
+                              >
+                                {statusLabel(step)}
+                              </p>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   <div>
                     <h3 className="font-display text-2xl font-bold text-primary mb-4">
@@ -278,7 +437,7 @@ export default function AccountPage() {
                                 className="border-t border-border"
                               >
                                 <td className="px-4 py-4 font-medium">
-                                  #{order.id.slice(0, 8)}
+                                  #{(order.order_number || order.id).slice(0, 8)}
                                 </td>
                                 <td className="px-4 py-4 text-muted-foreground">
                                   {order.created_at
@@ -286,8 +445,12 @@ export default function AccountPage() {
                                     : "N/A"}
                                 </td>
                                 <td className="px-4 py-4">
-                                  <span className="inline-flex rounded-full px-3 py-1 text-xs font-medium bg-gold/10 text-primary border border-gold/20 capitalize">
-                                    {order.status || "pending"}
+                                  <span
+                                    className={`inline-flex rounded-full px-3 py-1 text-xs font-medium border ${statusClasses(
+                                      order.status
+                                    )}`}
+                                  >
+                                    {statusLabel(order.status)}
                                   </span>
                                 </td>
                                 <td className="px-4 py-4 text-right font-semibold">
@@ -324,7 +487,7 @@ export default function AccountPage() {
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <div>
                               <p className="font-semibold text-primary">
-                                Order #{order.id.slice(0, 8)}
+                                Order #{order.order_number || order.id.slice(0, 8)}
                               </p>
                               <p className="text-sm text-muted-foreground mt-1">
                                 {order.created_at
@@ -333,9 +496,13 @@ export default function AccountPage() {
                               </p>
                             </div>
 
-                            <div className="flex items-center gap-4">
-                              <span className="inline-flex rounded-full px-3 py-1 text-xs font-medium bg-gold/10 text-primary border border-gold/20 capitalize">
-                                {order.status || "pending"}
+                            <div className="flex items-center gap-4 flex-wrap">
+                              <span
+                                className={`inline-flex rounded-full px-3 py-1 text-xs font-medium border ${statusClasses(
+                                  order.status
+                                )}`}
+                              >
+                                {statusLabel(order.status)}
                               </span>
                               <span className="font-bold text-lg">
                                 {formatPrice(order.total_amount || 0)}
@@ -357,8 +524,136 @@ export default function AccountPage() {
                               <p>{order.email || "No email available"}</p>
                             </div>
                           </div>
+
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <Link
+                              to={`/track-order?orderId=${order.id}`}
+                              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+                            >
+                              Track Order
+                              <ArrowRight className="w-4 h-4" />
+                            </Link>
+                          </div>
                         </div>
                       ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "tracking" && (
+                <div className="space-y-6">
+                  <SectionTitle
+                    title="Track Order"
+                    subtitle="Follow delivery progress and open your full tracking page."
+                  />
+
+                  {ordersLoading ? (
+                    <p className="text-muted-foreground">Loading tracking details...</p>
+                  ) : orders.length === 0 ? (
+                    <EmptyState text="No orders available for tracking yet." />
+                  ) : (
+                    <div className="space-y-4">
+                      {orders.map((order) => {
+                        const currentIndex = Math.max(
+                          trackingSteps.indexOf((order.status || "pending").toLowerCase()),
+                          0
+                        );
+
+                        return (
+                          <div
+                            key={order.id}
+                            className="rounded-[28px] border border-border bg-background p-5 md:p-6"
+                          >
+                            <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                              <div>
+                                <p className="text-sm text-muted-foreground">
+                                  Order Number
+                                </p>
+                                <h3 className="text-2xl font-bold text-primary mt-1">
+                                  #{order.order_number || order.id.slice(0, 8)}
+                                </h3>
+                                <p className="text-sm text-muted-foreground mt-2">
+                                  {order.created_at
+                                    ? new Date(order.created_at).toLocaleString()
+                                    : "N/A"}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-3">
+                                <span
+                                  className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold border ${statusClasses(
+                                    order.status
+                                  )}`}
+                                >
+                                  {statusLabel(order.status)}
+                                </span>
+
+                                <span className="text-lg font-bold">
+                                  {formatPrice(order.total_amount || 0)}
+                                </span>
+
+                                <Link
+                                  to={`/track-order?orderId=${order.id}`}
+                                  className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+                                >
+                                  Open Tracker
+                                  <ArrowRight className="w-4 h-4" />
+                                </Link>
+                              </div>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-4 mt-5">
+                              <MiniInfoCard
+                                title="Courier"
+                                value={order.courier_name || "Not assigned yet"}
+                              />
+                              <MiniInfoCard
+                                title="Tracking Number"
+                                value={order.tracking_number || "Not available yet"}
+                              />
+                              <MiniInfoCard
+                                title="Estimated Delivery"
+                                value={order.estimated_delivery || "Will be updated"}
+                              />
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mt-5">
+                              {trackingSteps.map((step, index) => {
+                                const completed = index <= currentIndex;
+
+                                return (
+                                  <div
+                                    key={step}
+                                    className={`rounded-2xl border p-4 text-center ${
+                                      completed
+                                        ? "border-primary/20 bg-primary/5"
+                                        : "border-border bg-card"
+                                    }`}
+                                  >
+                                    <div
+                                      className={`mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full ${
+                                        completed
+                                          ? "bg-primary text-primary-foreground"
+                                          : "bg-muted text-muted-foreground"
+                                      }`}
+                                    >
+                                      {completed ? (
+                                        <CheckCircle2 className="w-5 h-5" />
+                                      ) : (
+                                        <Clock3 className="w-5 h-5" />
+                                      )}
+                                    </div>
+                                    <p className="text-sm font-medium">
+                                      {statusLabel(step)}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -534,6 +829,21 @@ function InfoBox({
         <h3 className="font-semibold">{title}</h3>
       </div>
       <p className="text-muted-foreground leading-7">{value}</p>
+    </div>
+  );
+}
+
+function MiniInfoCard({
+  title,
+  value,
+}: {
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4">
+      <p className="text-sm text-muted-foreground">{title}</p>
+      <p className="mt-2 font-semibold break-words">{value}</p>
     </div>
   );
 }
