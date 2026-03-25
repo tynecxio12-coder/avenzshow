@@ -147,15 +147,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function AccountPageWithLayout() {
-  return (
-    <>
-      <Navbar />
-      <AccountPage />
-      <Footer />
-    </>
-  );
-}
 
 function App() {
   return (
@@ -181,13 +172,13 @@ function App() {
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route
-                path="/account"
-                element={
-                  <ProtectedRoute>
-                    <AccountPageWithLayout />
-                  </ProtectedRoute>
-                }
-              />
+  path="/account"
+  element={
+    <ProtectedRoute>
+      <AccountPage />
+    </ProtectedRoute>
+  }
+/>
               <Route path="/faq" element={<FAQPage />} />
               <Route path="/track-order" element={<TrackOrderPage />} />
               <Route
