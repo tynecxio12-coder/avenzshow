@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ArrowRight, PackageSearch } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -39,14 +40,18 @@ export default function MyOrdersPage() {
   return (
     <Layout>
       <div className="container py-12">
-        <h1 className="text-4xl font-bold mb-2">My Orders</h1>
-        <p className="text-muted-foreground mb-8">See all your recent orders</p>
+        <div className="mb-8 rounded-[28px] border border-border bg-card p-6 md:p-8">
+          <h1 className="text-4xl font-bold">My Orders</h1>
+          <p className="mt-2 text-muted-foreground">
+            View your order history, payment status, and live tracking updates.
+          </p>
+        </div>
 
         {loading ? (
-          <div>Loading...</div>
+          <div className="py-16 text-center">Loading...</div>
         ) : orders.length === 0 ? (
-          <div className="border rounded-2xl p-8 text-center">
-            <p className="text-muted-foreground mb-4">You have not placed any orders yet.</p>
+          <div className="rounded-[28px] border border-dashed p-10 text-center">
+            <p className="mb-4 text-muted-foreground">You have not placed any orders yet.</p>
             <Link to="/shop" className="font-semibold text-primary">
               Start shopping
             </Link>
@@ -57,58 +62,71 @@ export default function MyOrdersPage() {
               <div
                 key={order.id}
                 onClick={() => navigate(`/track-order?orderId=${order.id}`)}
-                className="cursor-pointer border rounded-2xl p-6 bg-card flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 transition hover:shadow-md hover:border-primary/30"
+                className="cursor-pointer rounded-[28px] border bg-card p-6 transition hover:border-primary/30 hover:shadow-md"
               >
-                <div>
-                  <p className="text-sm text-muted-foreground">Order Number</p>
-                  <p className="font-bold text-lg">{order.order_number || order.id}</p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {new Date(order.created_at).toLocaleString()}
-                  </p>
+                <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Order Number</p>
+                    <p className="mt-1 text-xl font-bold">{order.order_number || order.id}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {new Date(order.created_at).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <span
+                      className={`rounded-full border px-3 py-1 text-sm font-semibold ${getOrderStatusColor(
+                        order.status
+                      )}`}
+                    >
+                      {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] ||
+                        order.status}
+                    </span>
+
+                    <span
+                      className={`rounded-full border px-3 py-1 text-sm font-semibold ${getPaymentStatusColor(
+                        order.payment_status
+                      )}`}
+                    >
+                      {PAYMENT_STATUS_LABELS[
+                        order.payment_status as keyof typeof PAYMENT_STATUS_LABELS
+                      ] || order.payment_status}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total</p>
+                    <p className="font-bold">{formatPrice(order.total_amount)}</p>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2" onClick={(e) => e.stopPropagation()}>
+                    <Link
+                      to={`/order-confirmation/${order.id}`}
+                      className="inline-flex items-center justify-center rounded-xl border px-4 py-2.5 font-semibold"
+                    >
+                      View
+                    </Link>
+                    <Link
+                      to={`/track-order?orderId=${order.id}`}
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 font-semibold text-primary-foreground"
+                    >
+                      <PackageSearch className="h-4 w-4" />
+                      Track
+                    </Link>
+                  </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  <span
-                    className={`px-3 py-1 rounded-full border text-sm font-semibold ${getOrderStatusColor(
-                      order.status
-                    )}`}
-                  >
-                    {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] ||
-                      order.status}
-                  </span>
+                <div className="mt-5 flex items-center justify-between rounded-2xl bg-muted/40 p-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">
+                      Delivery progress
+                    </p>
+                    <p className="mt-1 text-sm font-medium">
+                      Click this card to open live order tracking.
+                    </p>
+                  </div>
 
-                  <span
-                    className={`px-3 py-1 rounded-full border text-sm font-semibold ${getPaymentStatusColor(
-                      order.payment_status
-                    )}`}
-                  >
-                    {PAYMENT_STATUS_LABELS[
-                      order.payment_status as keyof typeof PAYMENT_STATUS_LABELS
-                    ] || order.payment_status}
-                  </span>
-                </div>
-
-                <div>
-                  <p className="text-sm text-muted-foreground">Total</p>
-                  <p className="font-bold">{formatPrice(order.total_amount)}</p>
-                </div>
-
-                <div
-                  className="flex gap-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Link
-                    to={`/order-confirmation/${order.id}`}
-                    className="px-4 py-2 rounded-lg border font-semibold"
-                  >
-                    View
-                  </Link>
-                  <Link
-                    to={`/track-order?orderId=${order.id}`}
-                    className="px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold"
-                  >
-                    Track
-                  </Link>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
             ))}
