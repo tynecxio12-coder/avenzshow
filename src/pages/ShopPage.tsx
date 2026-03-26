@@ -54,37 +54,37 @@ export default function ShopPage() {
       setLoading(true);
       setErrorMessage("");
 
-      const { data, error } = await supabase
-        .from("products")
-        .select(`
-          id,
-          category_id,
-          name,
-          slug,
-          brand,
-          description,
-          price,
-          old_price,
-          currency,
-          stock,
-          sku,
-          image_url,
-          thumbnail,
-          image_url_2,
-          image_url_3,
-          featured,
-          best_seller,
-          new_arrival,
-          rating,
-          reviews_count,
-          category,
-          gender,
-          tags,
-          sizes,
-          features
-        `)
-        .eq("status", "active")
-        .order("created_at", { ascending: false });
+const { data, error } = await supabase
+  .from("products")
+  .select(`
+    id,
+    category_id,
+    name,
+    slug,
+    brand,
+    description,
+    price,
+    old_price,
+    currency,
+    stock,
+    sku,
+    image_url,
+    thumbnail,
+    image_url_2,
+    image_url_3,
+    featured,
+    best_seller,
+    new_arrival,
+    rating,
+    reviews_count,
+    category,
+    gender,
+    tags,
+    sizes,
+    features,
+    created_at
+  `)
+  .order("created_at", { ascending: false });
 
       if (error) {
         setErrorMessage(error.message);
