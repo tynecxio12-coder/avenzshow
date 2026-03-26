@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
-import { Package, Clock3, CheckCircle2, Wallet } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Package, Clock3, CheckCircle2, Wallet, LogOut } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { supabase } from "@/lib/supabase";
 import { OrderRow } from "@/types/order";
 import { formatPrice } from "@/lib/currency";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ORDER_STATUS_LABELS,
   PAYMENT_STATUS_LABELS,
@@ -19,8 +20,12 @@ export default function AdminOrdersPage() {
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [search, setSearch] = useState("");
 
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+
   const loadOrders = async () => {
     setLoading(true);
+
     const { data } = await supabase
       .from("orders")
       .select("*")
@@ -34,10 +39,16 @@ export default function AdminOrdersPage() {
     loadOrders();
   }, []);
 
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/login", { replace: true });
+  };
+
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-      const matchesPayment = paymentFilter === "all" || order.payment_status === paymentFilter;
+      const matchesPayment =
+        paymentFilter === "all" || order.payment_status === paymentFilter;
 
       const q = search.trim().toLowerCase();
       const matchesSearch =
@@ -73,9 +84,22 @@ export default function AdminOrdersPage() {
               </p>
             </div>
 
-            <button onClick={loadOrders} className="rounded-xl border px-4 py-2.5 font-semibold">
-              Refresh
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={loadOrders}
+                className="rounded-xl border px-4 py-2.5 font-semibold"
+              >
+                Refresh
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="inline-flex items-center gap-2 rounded-xl border border-red-300 px-4 py-2.5 font-semibold text-red-500 hover:bg-red-50"
+              >
+                <LogOut className="h-4 w-4" />
+                Logout
+              </button>
+            </div>
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -146,15 +170,26 @@ export default function AdminOrdersPage() {
 
                 <div>
                   <p className="text-sm text-muted-foreground">Order Status</p>
-                  <span className={`mt-1 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getOrderStatusColor(order.status)}`}>
-                    {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] || order.status}
+                  <span
+                    className={`mt-1 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getOrderStatusColor(
+                      order.status
+                    )}`}
+                  >
+                    {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] ||
+                      order.status}
                   </span>
                 </div>
 
                 <div>
                   <p className="text-sm text-muted-foreground">Payment</p>
-                  <span className={`mt-1 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getPaymentStatusColor(order.payment_status)}`}>
-                    {PAYMENT_STATUS_LABELS[order.payment_status as keyof typeof PAYMENT_STATUS_LABELS] || order.payment_status}
+                  <span
+                    className={`mt-1 inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getPaymentStatusColor(
+                      order.payment_status
+                    )}`}
+                  >
+                    {PAYMENT_STATUS_LABELS[
+                      order.payment_status as keyof typeof PAYMENT_STATUS_LABELS
+                    ] || order.payment_status}
                   </span>
                 </div>
 
