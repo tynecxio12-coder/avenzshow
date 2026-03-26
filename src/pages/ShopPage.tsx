@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useDeferredValue } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Grid3X3, List, SlidersHorizontal, X, Search } from "lucide-react";
 import Layout from "@/components/layout/Layout";
@@ -44,6 +44,9 @@ export default function ShopPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [gridView, setGridView] = useState(true);
 
+  const deferredLocalSearch = useDeferredValue(localSearch);
+  const deferredGlobalSearch = useDeferredValue(searchQuery);
+
   const filter = params.get("filter") || "";
 
   useEffect(() => {
@@ -53,7 +56,34 @@ export default function ShopPage() {
 
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select(`
+          id,
+          category_id,
+          name,
+          slug,
+          brand,
+          description,
+          price,
+          old_price,
+          currency,
+          stock,
+          sku,
+          image_url,
+          thumbnail,
+          image_url_2,
+          image_url_3,
+          featured,
+          best_seller,
+          new_arrival,
+          rating,
+          reviews_count,
+          category,
+          gender,
+          tags,
+          sizes,
+          features
+        `)
+        .eq("status", "active")
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -70,7 +100,7 @@ export default function ShopPage() {
 
   const filtered = useMemo(() => {
     let result = [...allProducts];
-    const finalSearch = (localSearch || searchQuery || "").trim().toLowerCase();
+    const finalSearch = (deferredLocalSearch || deferredGlobalSearch || "").trim().toLowerCase();
 
     if (finalSearch) {
       result = result.filter(
@@ -118,7 +148,16 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [allProducts, searchQuery, localSearch, selectedCategory, selectedGender, selectedPrice, filter, sort]);
+  }, [
+    allProducts,
+    deferredGlobalSearch,
+    deferredLocalSearch,
+    selectedCategory,
+    selectedGender,
+    selectedPrice,
+    filter,
+    sort,
+  ]);
 
   const clearFilters = () => {
     setSelectedCategory("");
@@ -129,9 +168,9 @@ export default function ShopPage() {
 
   const activeChips = [
     selectedCategory && {
-  label: categoryLabels[selectedCategory] || selectedCategory,
-  onRemove: () => setSelectedCategory(""),
-},
+      label: categoryLabels[selectedCategory] || selectedCategory,
+      onRemove: () => setSelectedCategory(""),
+    },
     selectedGender && { label: selectedGender, onRemove: () => setSelectedGender("") },
     selectedPrice !== null && {
       label: priceRanges[selectedPrice].label,
@@ -143,17 +182,17 @@ export default function ShopPage() {
   const hasFilters = activeChips.length > 0;
 
   const pageTitle =
-  filter === "new"
-    ? "New Arrivals"
-    : filter === "bestseller"
-    ? "Best Sellers"
-    : filter === "trending"
-    ? "Trending Now"
-    : filter === "sale"
-    ? "Sale Collection"
-    : selectedCategory
-    ? categoryLabels[selectedCategory] || selectedCategory
-    : "All Shoes";
+    filter === "new"
+      ? "New Arrivals"
+      : filter === "bestseller"
+      ? "Best Sellers"
+      : filter === "trending"
+      ? "Trending Now"
+      : filter === "sale"
+      ? "Sale Collection"
+      : selectedCategory
+      ? categoryLabels[selectedCategory] || selectedCategory
+      : "All Shoes";
 
   const FilterPanel = () => (
     <div className="space-y-8">
