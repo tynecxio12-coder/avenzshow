@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
-import { Grid3X3, List, SlidersHorizontal, X } from "lucide-react";
+import { Grid3X3, List, SlidersHorizontal, X, Search } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/ProductCard";
 import { categories, genders, Product, mapSupabaseProduct } from "@/data/products";
@@ -29,6 +29,7 @@ export default function ShopPage() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const [localSearch, setLocalSearch] = useState("");
 
   const [sort, setSort] = useState("newest");
   const [selectedCategory, setSelectedCategory] = useState(params.get("category") || "");
@@ -41,6 +42,9 @@ export default function ShopPage() {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setLoading(true);
+      setErrorMessage("");
+
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -60,14 +64,15 @@ export default function ShopPage() {
 
   const filtered = useMemo(() => {
     let result = [...allProducts];
+    const finalSearch = (localSearch || searchQuery || "").trim().toLowerCase();
 
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    if (finalSearch) {
       result = result.filter(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.brand.toLowerCase().includes(q) ||
-          p.tags.some((t) => t.includes(q))
+          p.name.toLowerCase().includes(finalSearch) ||
+          p.brand.toLowerCase().includes(finalSearch) ||
+          p.category.toLowerCase().includes(finalSearch) ||
+          p.tags.some((t) => t.toLowerCase().includes(finalSearch))
       );
     }
 
@@ -76,9 +81,7 @@ export default function ShopPage() {
     }
 
     if (selectedGender) {
-      result = result.filter(
-        (p) => p.gender === selectedGender || p.gender === "unisex"
-      );
+      result = result.filter((p) => p.gender === selectedGender || p.gender === "unisex");
     }
 
     if (selectedPrice !== null) {
@@ -109,26 +112,52 @@ export default function ShopPage() {
     }
 
     return result;
-  }, [allProducts, searchQuery, selectedCategory, selectedGender, selectedPrice, filter, sort]);
+  }, [allProducts, searchQuery, localSearch, selectedCategory, selectedGender, selectedPrice, filter, sort]);
 
   const clearFilters = () => {
     setSelectedCategory("");
     setSelectedGender("");
     setSelectedPrice(null);
+    setLocalSearch("");
   };
 
-  const hasFilters = selectedCategory || selectedGender || selectedPrice !== null;
+  const activeChips = [
+    selectedCategory && { label: selectedCategory, onRemove: () => setSelectedCategory("") },
+    selectedGender && { label: selectedGender, onRemove: () => setSelectedGender("") },
+    selectedPrice !== null && {
+      label: priceRanges[selectedPrice].label,
+      onRemove: () => setSelectedPrice(null),
+    },
+    localSearch && { label: `Search: ${localSearch}`, onRemove: () => setLocalSearch("") },
+  ].filter(Boolean) as { label: string; onRemove: () => void }[];
+
+  const hasFilters = activeChips.length > 0;
+
+  const pageTitle =
+    filter === "new"
+      ? "New Arrivals"
+      : filter === "bestseller"
+      ? "Best Sellers"
+      : filter === "trending"
+      ? "Trending Now"
+      : filter === "sale"
+      ? "Sale Collection"
+      : selectedCategory
+      ? selectedCategory
+      : "All Shoes";
 
   const FilterPanel = () => (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h4 className="font-semibold text-sm uppercase tracking-wide mb-3">Category</h4>
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          Category
+        </h4>
         <div className="space-y-2">
           {categories.map((c) => (
             <button
               key={c}
               onClick={() => setSelectedCategory(selectedCategory === c ? "" : c)}
-              className={`block w-full text-left px-3 py-2 rounded-lg text-sm capitalize transition-colors ${
+              className={`block w-full rounded-xl px-3 py-2.5 text-left text-sm capitalize transition-colors ${
                 selectedCategory === c
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-muted"
@@ -141,13 +170,15 @@ export default function ShopPage() {
       </div>
 
       <div>
-        <h4 className="font-semibold text-sm uppercase tracking-wide mb-3">Gender</h4>
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          Gender
+        </h4>
         <div className="space-y-2">
           {genders.map((g) => (
             <button
               key={g}
               onClick={() => setSelectedGender(selectedGender === g ? "" : g)}
-              className={`block w-full text-left px-3 py-2 rounded-lg text-sm capitalize transition-colors ${
+              className={`block w-full rounded-xl px-3 py-2.5 text-left text-sm capitalize transition-colors ${
                 selectedGender === g
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-muted"
@@ -160,13 +191,15 @@ export default function ShopPage() {
       </div>
 
       <div>
-        <h4 className="font-semibold text-sm uppercase tracking-wide mb-3">Price Range</h4>
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+          Price Range
+        </h4>
         <div className="space-y-2">
           {priceRanges.map((r, i) => (
             <button
-              key={i}
+              key={r.label}
               onClick={() => setSelectedPrice(selectedPrice === i ? null : i)}
-              className={`block w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+              className={`block w-full rounded-xl px-3 py-2.5 text-left text-sm transition-colors ${
                 selectedPrice === i
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-muted"
@@ -179,10 +212,7 @@ export default function ShopPage() {
       </div>
 
       {hasFilters && (
-        <button
-          onClick={clearFilters}
-          className="text-sm text-destructive hover:underline"
-        >
+        <button onClick={clearFilters} className="text-sm font-medium text-destructive hover:underline">
           Clear all filters
         </button>
       )}
@@ -192,8 +222,20 @@ export default function ShopPage() {
   if (loading) {
     return (
       <Layout>
-        <div className="section-padding py-20 text-center">
-          <p className="text-lg">Loading products...</p>
+        <div className="section-padding py-20">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-4 lg:gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="animate-pulse overflow-hidden rounded-2xl border border-border bg-card">
+                <div className="aspect-[4/4.4] bg-muted" />
+                <div className="space-y-3 p-4">
+                  <div className="h-3 w-20 rounded bg-muted" />
+                  <div className="h-4 w-40 rounded bg-muted" />
+                  <div className="h-3 w-24 rounded bg-muted" />
+                  <div className="h-4 w-28 rounded bg-muted" />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </Layout>
     );
@@ -202,8 +244,9 @@ export default function ShopPage() {
   if (errorMessage) {
     return (
       <Layout>
-        <div className="section-padding py-20 text-center text-red-500">
-          Error: {errorMessage}
+        <div className="section-padding py-20 text-center">
+          <p className="text-lg font-semibold text-destructive">Failed to load products</p>
+          <p className="mt-2 text-sm text-muted-foreground">{errorMessage}</p>
         </div>
       </Layout>
     );
@@ -211,80 +254,102 @@ export default function ShopPage() {
 
   return (
     <Layout>
-      <div className="section-padding py-8">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold">
-              {filter === "new"
-                ? "New Arrivals"
-                : filter === "bestseller"
-                ? "Best Sellers"
-                : filter === "trending"
-                ? "Trending"
-                : selectedCategory
-                ? <span className="capitalize">{selectedCategory}</span>
-                : "All Shoes"}
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">{filtered.length} products</p>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              className="lg:hidden p-2 border border-border rounded-lg"
-              onClick={() => setFiltersOpen(!filtersOpen)}
-            >
-              <SlidersHorizontal className="w-5 h-5" />
-            </button>
-
-            <div className="hidden sm:flex items-center border border-border rounded-lg overflow-hidden">
-              <button
-                onClick={() => setGridView(true)}
-                className={`p-2 ${gridView ? "bg-primary text-primary-foreground" : ""}`}
-              >
-                <Grid3X3 className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setGridView(false)}
-                className={`p-2 ${!gridView ? "bg-primary text-primary-foreground" : ""}`}
-              >
-                <List className="w-4 h-4" />
-              </button>
+      <section className="section-padding py-8">
+        <div className="mb-8 rounded-[28px] border border-border bg-card p-6 md:p-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">
+                Premium Collection
+              </p>
+              <h1 className="font-display text-3xl font-bold capitalize md:text-5xl">
+                {pageTitle}
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm text-muted-foreground md:text-base">
+                Explore premium footwear designed for comfort, performance, and modern style.
+              </p>
             </div>
 
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="text-sm border border-border rounded-lg px-3 py-2 bg-card focus:outline-none focus:ring-2 focus:ring-gold/50"
-            >
-              {sortOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+              <div className="relative min-w-[240px]">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  value={localSearch}
+                  onChange={(e) => setLocalSearch(e.target.value)}
+                  placeholder="Search shoes, brands, categories..."
+                  className="h-11 w-full rounded-xl border border-border bg-background pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-gold/50"
+                />
+              </div>
+
+              <div className="hidden items-center overflow-hidden rounded-xl border border-border sm:flex">
+                <button
+                  onClick={() => setGridView(true)}
+                  className={`px-3 py-2.5 ${gridView ? "bg-primary text-primary-foreground" : "bg-card"}`}
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setGridView(false)}
+                  className={`px-3 py-2.5 ${!gridView ? "bg-primary text-primary-foreground" : "bg-card"}`}
+                >
+                  <List className="h-4 w-4" />
+                </button>
+              </div>
+
+              <button
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-2.5 lg:hidden"
+                onClick={() => setFiltersOpen(true)}
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+              </button>
+            </div>
           </div>
         </div>
 
-        <div className="flex gap-8">
-          <div className="hidden lg:block w-56 shrink-0">
-            <FilterPanel />
+        {hasFilters && (
+          <div className="mb-6 flex flex-wrap gap-2">
+            {activeChips.map((chip) => (
+              <button
+                key={chip.label}
+                onClick={chip.onRemove}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium"
+              >
+                {chip.label}
+                <X className="h-3.5 w-3.5" />
+              </button>
+            ))}
+
+            <button
+              onClick={clearFilters}
+              className="inline-flex items-center rounded-full bg-muted px-3 py-1.5 text-xs font-medium"
+            >
+              Clear all
+            </button>
           </div>
+        )}
+
+        <div className="flex gap-8">
+          <aside className="hidden w-64 shrink-0 rounded-[24px] border border-border bg-card p-5 lg:block">
+            <FilterPanel />
+          </aside>
 
           {filtersOpen && (
-            <div className="fixed inset-0 z-50 bg-background lg:hidden overflow-auto">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="font-display text-xl font-bold">Filters</h3>
+            <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm lg:hidden">
+              <div className="mx-auto max-w-md p-6">
+                <div className="mb-6 flex items-center justify-between">
+                  <h3 className="font-display text-2xl font-bold">Filters</h3>
                   <button onClick={() => setFiltersOpen(false)}>
-                    <X className="w-6 h-6" />
+                    <X className="h-6 w-6" />
                   </button>
                 </div>
 
-                <FilterPanel />
+                <div className="rounded-[24px] border border-border bg-card p-5">
+                  <FilterPanel />
+                </div>
 
                 <button
                   onClick={() => setFiltersOpen(false)}
-                  className="w-full mt-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold text-sm uppercase tracking-wide"
+                  className="mt-6 w-full rounded-xl bg-primary py-3 font-semibold uppercase tracking-[0.18em] text-primary-foreground"
                 >
                   Show {filtered.length} Results
                 </button>
@@ -292,20 +357,46 @@ export default function ShopPage() {
             </div>
           )}
 
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
+            <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing <span className="font-semibold text-foreground">{filtered.length}</span> products
+              </p>
+
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none focus:ring-2 focus:ring-gold/50"
+              >
+                {sortOptions.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    Sort by: {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {filtered.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-xl font-display font-semibold">No products found</p>
-                <p className="text-muted-foreground mt-2 text-sm">Try adjusting your filters</p>
+              <div className="rounded-[28px] border border-dashed border-border bg-card py-20 text-center">
+                <p className="font-display text-2xl font-bold">No products found</p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Try changing your filters or search keywords.
+                </p>
                 <button
                   onClick={clearFilters}
-                  className="mt-4 px-6 py-2 bg-primary text-primary-foreground rounded-lg text-sm"
+                  className="mt-5 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground"
                 >
                   Clear Filters
                 </button>
               </div>
             ) : (
-              <div className={gridView ? "grid grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6" : "space-y-4"}>
+              <div
+                className={
+                  gridView
+                    ? "grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-6 xl:grid-cols-4"
+                    : "space-y-4"
+                }
+              >
                 {filtered.map((p, i) => (
                   <ProductCard key={p.id} product={p} index={i} />
                 ))}
@@ -313,7 +404,7 @@ export default function ShopPage() {
             )}
           </div>
         </div>
-      </div>
+      </section>
     </Layout>
   );
 }
