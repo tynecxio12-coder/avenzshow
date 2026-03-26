@@ -54,15 +54,57 @@ export const categories = [
   "sandals",
 ];
 
+export const categoryLabels: Record<string, string> = {
+  sneakers: "Sneakers",
+  formal: "Formal Shoes",
+  boots: "Boots",
+  sports: "Sports Shoes",
+  casual: "Casual Shoes",
+  sandals: "Sandals",
+};
+
 export const genders = ["men", "women", "unisex"];
 
 export const reviews: ProductReview[] = [];
+
+const normalizeCategory = (value?: string | null) => {
+  const raw = (value || "").trim().toLowerCase();
+
+  if (!raw) return "";
+
+  if (["sneaker", "sneakers", "running", "running shoes", "sneakers shoes"].includes(raw)) {
+    return "sneakers";
+  }
+
+  if (["formal", "formal shoes", "office", "leather formal", "loafer", "oxford", "derby"].includes(raw)) {
+    return "formal";
+  }
+
+  if (["boot", "boots"].includes(raw)) {
+    return "boots";
+  }
+
+  if (["sport", "sports", "sports shoes", "sportswear", "trainer", "athletic"].includes(raw)) {
+    return "sports";
+  }
+
+  if (["casual", "casual shoes"].includes(raw)) {
+    return "casual";
+  }
+
+  if (["sandal", "sandals", "slide", "slippers"].includes(raw)) {
+    return "sandals";
+  }
+
+  return "";
+};
 
 const inferCategory = (name: string, slug: string) => {
   const text = `${name} ${slug}`.toLowerCase();
 
   if (text.includes("boot")) return "boots";
-  if (text.includes("sandal") || text.includes("slide")) return "sandals";
+  if (text.includes("sandal") || text.includes("slide") || text.includes("slipper")) return "sandals";
+
   if (
     text.includes("formal") ||
     text.includes("oxford") ||
@@ -71,6 +113,7 @@ const inferCategory = (name: string, slug: string) => {
   ) {
     return "formal";
   }
+
   if (
     text.includes("sport") ||
     text.includes("running") ||
@@ -79,9 +122,20 @@ const inferCategory = (name: string, slug: string) => {
   ) {
     return "sports";
   }
+
   if (text.includes("casual")) return "casual";
 
   return "sneakers";
+};
+
+const normalizeGender = (value?: string | null) => {
+  const raw = (value || "").trim().toLowerCase();
+
+  if (["men", "male", "man", "gents", "gent"].includes(raw)) return "men";
+  if (["women", "female", "woman", "ladies", "lady"].includes(raw)) return "women";
+  if (["unisex", "all"].includes(raw)) return "unisex";
+
+  return "";
 };
 
 const inferGender = (name: string, brand: string) => {
@@ -129,6 +183,7 @@ const buildColors = (name: string): ProductColor[] => {
 
 export const mapSupabaseProduct = (row: any): Product => {
   const price = Number(row.price || 0);
+
   const oldPrice =
     row.old_price !== null && row.old_price !== undefined
       ? Number(row.old_price)
@@ -139,11 +194,18 @@ export const mapSupabaseProduct = (row: any): Product => {
       ? Math.round(((oldPrice - price) / oldPrice) * 100)
       : 0;
 
-  const category = inferCategory(row.name || "", row.slug || "");
-  const gender = inferGender(row.name || "", row.brand || "");
+  // 🔥 IMPORTANT FIX: USE DB VALUE FIRST, THEN FALLBACK TO INFERENCE
+  const category =
+    normalizeCategory(row.category) || inferCategory(row.name || "", row.slug || "");
+
+  const gender =
+    normalizeGender(row.gender) || inferGender(row.name || "", row.brand || "");
+
   const colors = buildColors(row.name || "");
+
   const mainImage =
     row.image_url ||
+    row.thumbnail ||
     "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
 
   return {
@@ -160,14 +222,18 @@ export const mapSupabaseProduct = (row: any): Product => {
     stock: Number(row.stock ?? 0),
     sku: row.sku ?? "N/A",
     image_url: mainImage,
-    images: [mainImage, mainImage, mainImage],
+    images: [
+      mainImage,
+      row.image_url_2 || mainImage,
+      row.image_url_3 || mainImage,
+    ],
     featured: Boolean(row.featured),
     bestSeller: Boolean(row.best_seller),
     isNew: Boolean(row.new_arrival),
     isBestSeller: Boolean(row.best_seller),
     isTrending: Boolean(row.featured),
-    rating: Number(row.rating ?? 0),
-    reviewsCount: Number(row.reviews_count ?? 0),
+    rating: Number(row.rating ?? 4.5),
+    reviewsCount: Number(row.reviews_count ?? 12),
     category,
     gender,
     tags: [
@@ -175,14 +241,17 @@ export const mapSupabaseProduct = (row: any): Product => {
       (row.brand ?? "").toLowerCase(),
       category,
       gender,
+      ...(Array.isArray(row.tags) ? row.tags.map((t: string) => t.toLowerCase()) : []),
     ].filter(Boolean),
     colors,
-    sizes: [39, 40, 41, 42, 43, 44],
-    features: [
-      "Premium upper material",
-      "Comfort-focused cushioned sole",
-      "Durable outsole for daily wear",
-      "Stylish modern silhouette",
-    ],
+    sizes: Array.isArray(row.sizes) && row.sizes.length ? row.sizes : [39, 40, 41, 42, 43, 44],
+    features: Array.isArray(row.features) && row.features.length
+      ? row.features
+      : [
+          "Premium upper material",
+          "Comfort-focused cushioned sole",
+          "Durable outsole for daily wear",
+          "Stylish modern silhouette",
+        ],
   };
 };
