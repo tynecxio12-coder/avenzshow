@@ -3,7 +3,13 @@ import { useSearchParams } from "react-router-dom";
 import { Grid3X3, List, SlidersHorizontal, X, Search } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import ProductCard from "@/components/ProductCard";
-import { categories, genders, Product, mapSupabaseProduct } from "@/data/products";
+import {
+  categories,
+  categoryLabels,
+  genders,
+  Product,
+  mapSupabaseProduct,
+} from "@/data/products";
 import { useStore } from "@/contexts/StoreContext";
 import { supabase } from "@/lib/supabase";
 
@@ -122,7 +128,10 @@ export default function ShopPage() {
   };
 
   const activeChips = [
-    selectedCategory && { label: selectedCategory, onRemove: () => setSelectedCategory("") },
+    selectedCategory && {
+  label: categoryLabels[selectedCategory] || selectedCategory,
+  onRemove: () => setSelectedCategory(""),
+},
     selectedGender && { label: selectedGender, onRemove: () => setSelectedGender("") },
     selectedPrice !== null && {
       label: priceRanges[selectedPrice].label,
@@ -134,17 +143,17 @@ export default function ShopPage() {
   const hasFilters = activeChips.length > 0;
 
   const pageTitle =
-    filter === "new"
-      ? "New Arrivals"
-      : filter === "bestseller"
-      ? "Best Sellers"
-      : filter === "trending"
-      ? "Trending Now"
-      : filter === "sale"
-      ? "Sale Collection"
-      : selectedCategory
-      ? selectedCategory
-      : "All Shoes";
+  filter === "new"
+    ? "New Arrivals"
+    : filter === "bestseller"
+    ? "Best Sellers"
+    : filter === "trending"
+    ? "Trending Now"
+    : filter === "sale"
+    ? "Sale Collection"
+    : selectedCategory
+    ? categoryLabels[selectedCategory] || selectedCategory
+    : "All Shoes";
 
   const FilterPanel = () => (
     <div className="space-y-8">
@@ -163,7 +172,7 @@ export default function ShopPage() {
                   : "hover:bg-muted"
               }`}
             >
-              {c}
+              {categoryLabels[c] || c}
             </button>
           ))}
         </div>
