@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ShieldCheck, CreditCard, Banknote, Smartphone } from "lucide-react";
+import { ShieldCheck, CreditCard, Banknote, Smartphone, Truck, CheckCircle2 } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -62,6 +62,12 @@ export default function CheckoutPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+
+    if (name === "notes") {
+      setNotes(value);
+      return;
+    }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -104,8 +110,7 @@ export default function CheckoutPage() {
       const paymentLabel =
         paymentMethods.find((p) => p.id === payment)?.label || "Cash on Delivery";
 
-      const paymentStatus =
-        payment === "cod" ? "unpaid" : "pending_verification";
+      const paymentStatus = payment === "cod" ? "unpaid" : "pending_verification";
 
       const { data: order, error: orderError } = await supabase
         .from("orders")
@@ -151,24 +156,19 @@ export default function CheckoutPage() {
         total_price: item.product.price * item.quantity,
       }));
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItemsPayload);
-
+      const { error: itemsError } = await supabase.from("order_items").insert(orderItemsPayload);
       if (itemsError) throw itemsError;
 
-      const { error: trackingError } = await supabase
-        .from("order_tracking_history")
-        .insert([
-          {
-            order_id: order.id,
-            status: "pending",
-            title: "Order placed",
-            description: "Your order has been placed successfully.",
-            location: "AvenzShoe Store",
-            updated_by: user.id,
-          },
-        ]);
+      const { error: trackingError } = await supabase.from("order_tracking_history").insert([
+        {
+          order_id: order.id,
+          status: "pending",
+          title: "Order placed",
+          description: "Your order has been placed successfully.",
+          location: "AvenzShoe Store",
+          updated_by: user.id,
+        },
+      ]);
 
       if (trackingError) throw trackingError;
 
@@ -187,10 +187,10 @@ export default function CheckoutPage() {
     return (
       <Layout>
         <div className="container py-24 text-center">
-          <h1 className="text-3xl font-bold mb-4">Your cart is empty</h1>
+          <h1 className="mb-4 text-3xl font-bold">Your cart is empty</h1>
           <Link
             to="/shop"
-            className="inline-flex px-6 py-3 rounded-lg bg-primary text-primary-foreground font-semibold"
+            className="inline-flex rounded-lg bg-primary px-6 py-3 font-semibold text-primary-foreground"
           >
             Continue Shopping
           </Link>
@@ -202,74 +202,74 @@ export default function CheckoutPage() {
   return (
     <Layout>
       <div className="container py-10">
-        <h1 className="text-4xl font-bold mb-2">Checkout</h1>
-        <p className="text-muted-foreground mb-8">Complete your order</p>
+        <div className="mb-8 rounded-[28px] border border-border bg-card p-6 md:p-8">
+          <h1 className="text-4xl font-bold">Checkout</h1>
+          <p className="mt-2 text-muted-foreground">Complete your order securely</p>
+        </div>
 
-        <form onSubmit={handlePlaceOrder} className="grid lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 space-y-8">
-            <div className="bg-card rounded-xl border p-6">
-              <h2 className="text-xl font-bold mb-4">Billing & Shipping Details</h2>
+        <form onSubmit={handlePlaceOrder} className="grid gap-8 lg:grid-cols-3">
+          <div className="space-y-8 lg:col-span-2">
+            <div className="rounded-[28px] border bg-card p-6">
+              <h2 className="mb-5 text-xl font-bold">Billing & Shipping Details</h2>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <input name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="First name" className="px-4 py-3 rounded-lg border bg-background" />
-                <input name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Last name" className="px-4 py-3 rounded-lg border bg-background" />
-                <input name="email" value={formData.email} onChange={handleInputChange} placeholder="Email address" className="px-4 py-3 rounded-lg border bg-background md:col-span-2" />
-                <input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Phone number" className="px-4 py-3 rounded-lg border bg-background md:col-span-2" />
-                <input name="streetAddress" value={formData.streetAddress} onChange={handleInputChange} placeholder="Street address" className="px-4 py-3 rounded-lg border bg-background md:col-span-2" />
-                <input name="apartment" value={formData.apartment} onChange={handleInputChange} placeholder="Apartment, suite, etc. (optional)" className="px-4 py-3 rounded-lg border bg-background md:col-span-2" />
-                <input name="city" value={formData.city} onChange={handleInputChange} placeholder="City" className="px-4 py-3 rounded-lg border bg-background" />
-                <input name="postalCode" value={formData.postalCode} onChange={handleInputChange} placeholder="Postal code" className="px-4 py-3 rounded-lg border bg-background" />
+              <div className="grid gap-4 md:grid-cols-2">
+                <input name="firstName" value={formData.firstName} onChange={handleInputChange} placeholder="First name" className="rounded-xl border bg-background px-4 py-3" />
+                <input name="lastName" value={formData.lastName} onChange={handleInputChange} placeholder="Last name" className="rounded-xl border bg-background px-4 py-3" />
+                <input name="email" value={formData.email} onChange={handleInputChange} placeholder="Email address" className="rounded-xl border bg-background px-4 py-3 md:col-span-2" />
+                <input name="phone" value={formData.phone} onChange={handleInputChange} placeholder="Phone number" className="rounded-xl border bg-background px-4 py-3 md:col-span-2" />
+                <input name="streetAddress" value={formData.streetAddress} onChange={handleInputChange} placeholder="Street address" className="rounded-xl border bg-background px-4 py-3 md:col-span-2" />
+                <input name="apartment" value={formData.apartment} onChange={handleInputChange} placeholder="Apartment, suite, etc. (optional)" className="rounded-xl border bg-background px-4 py-3 md:col-span-2" />
+                <input name="city" value={formData.city} onChange={handleInputChange} placeholder="City" className="rounded-xl border bg-background px-4 py-3" />
+                <input name="postalCode" value={formData.postalCode} onChange={handleInputChange} placeholder="Postal code" className="rounded-xl border bg-background px-4 py-3" />
               </div>
             </div>
 
-            <div className="bg-card rounded-xl border p-6">
-              <h2 className="text-xl font-bold mb-4">Delivery Option</h2>
+            <div className="rounded-[28px] border bg-card p-6">
+              <h2 className="mb-5 text-xl font-bold">Delivery Option</h2>
+
               <div className="space-y-3">
                 {deliveryOptions.map((opt) => (
                   <label
                     key={opt.id}
-                    className={`flex items-center justify-between border rounded-lg p-4 cursor-pointer ${
-                      delivery === opt.id ? "border-primary" : "border-border"
+                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-4 ${
+                      delivery === opt.id ? "border-primary bg-primary/5" : "border-border"
                     }`}
                   >
-                    <div>
-                      <p className="font-semibold">{opt.label}</p>
-                      <p className="text-sm text-muted-foreground">{opt.time}</p>
+                    <div className="flex items-start gap-3">
+                      <Truck className="mt-0.5 h-5 w-5 text-gold" />
+                      <div>
+                        <p className="font-semibold">{opt.label}</p>
+                        <p className="text-sm text-muted-foreground">{opt.time}</p>
+                      </div>
                     </div>
+
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">
                         {opt.id === "dhaka" && cartTotal > 5000 ? "Free" : formatPrice(opt.price)}
                       </span>
-                      <input
-                        type="radio"
-                        checked={delivery === opt.id}
-                        onChange={() => setDelivery(opt.id)}
-                      />
+                      <input type="radio" checked={delivery === opt.id} onChange={() => setDelivery(opt.id)} />
                     </div>
                   </label>
                 ))}
               </div>
             </div>
 
-            <div className="bg-card rounded-xl border p-6">
-              <h2 className="text-xl font-bold mb-4">Payment Method</h2>
+            <div className="rounded-[28px] border bg-card p-6">
+              <h2 className="mb-5 text-xl font-bold">Payment Method</h2>
+
               <div className="space-y-3">
                 {paymentMethods.map(({ id, label, icon: Icon }) => (
                   <label
                     key={id}
-                    className={`flex items-center justify-between border rounded-lg p-4 cursor-pointer ${
-                      payment === id ? "border-primary" : "border-border"
+                    className={`flex cursor-pointer items-center justify-between rounded-2xl border p-4 ${
+                      payment === id ? "border-primary bg-primary/5" : "border-border"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className="w-5 h-5" />
+                      <Icon className="h-5 w-5" />
                       <span className="font-semibold">{label}</span>
                     </div>
-                    <input
-                      type="radio"
-                      checked={payment === id}
-                      onChange={() => setPayment(id)}
-                    />
+                    <input type="radio" checked={payment === id} onChange={() => setPayment(id)} />
                   </label>
                 ))}
               </div>
@@ -281,31 +281,31 @@ export default function CheckoutPage() {
                   onChange={handleInputChange}
                   rows={3}
                   placeholder="Special instructions for delivery..."
-                  className="w-full px-4 py-3 rounded-lg border bg-background"
+                  className="w-full rounded-xl border bg-background px-4 py-3"
                 />
               </div>
             </div>
           </div>
 
-          <div className="h-fit sticky top-28">
-            <div className="bg-card rounded-xl border p-6">
-              <h2 className="text-lg font-bold mb-4">Order Summary</h2>
+          <div className="sticky top-28 h-fit">
+            <div className="rounded-[28px] border bg-card p-6">
+              <h2 className="mb-5 text-lg font-bold">Order Summary</h2>
 
-              <div className="space-y-3 mb-5">
+              <div className="mb-5 space-y-3">
                 {cart.map((item) => (
                   <div
-                    key={`${item.product.id}-${item.selectedSize}`}
+                    key={`${item.product.id}-${item.selectedSize}-${item.selectedColor}`}
                     className="flex items-center gap-3"
                   >
                     <img
                       src={item.product.images[0]}
                       alt={item.product.name}
-                      className="w-14 h-14 rounded-lg object-cover"
+                      className="h-14 w-14 rounded-xl object-cover"
                     />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold line-clamp-1">{item.product.name}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="line-clamp-1 text-sm font-semibold">{item.product.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        Size: {item.selectedSize} × {item.quantity}
+                        Size: {item.selectedSize} • Qty: {item.quantity}
                       </p>
                     </div>
                     <span className="text-sm font-semibold">
@@ -315,27 +315,27 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
-              <div className="flex gap-2 mb-4">
+              <div className="mb-4 flex gap-2">
                 <input
                   value={coupon}
                   onChange={(e) => setCoupon(e.target.value)}
                   placeholder="Coupon code"
-                  className="flex-1 px-3 py-2 text-sm border rounded-lg bg-background"
+                  className="flex-1 rounded-xl border bg-background px-3 py-2.5 text-sm"
                 />
                 <button
                   type="button"
                   onClick={applyCoupon}
-                  className="px-4 py-2 bg-primary text-primary-foreground text-sm font-semibold rounded-lg"
+                  className="rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
                 >
                   Apply
                 </button>
               </div>
 
               {couponApplied && (
-                <p className="text-sm text-green-600 mb-3">AVENZ20 applied — 20% off!</p>
+                <p className="mb-3 text-sm text-green-600">AVENZ20 applied — 20% off!</p>
               )}
 
-              <div className="space-y-2 text-sm border-t pt-4">
+              <div className="space-y-2 border-t pt-4 text-sm">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>{formatPrice(cartTotal)}</span>
@@ -353,7 +353,11 @@ export default function CheckoutPage() {
                   <span>{freeShipping ? "Free" : formatPrice(finalDelivery)}</span>
                 </div>
 
-                <div className="border-t pt-3 flex justify-between font-bold text-base">
+                <div className="rounded-xl bg-primary/5 p-3 text-xs text-muted-foreground">
+                  Free delivery on orders above ৳5,000 inside Dhaka.
+                </div>
+
+                <div className="flex justify-between border-t pt-3 text-base font-bold">
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
@@ -362,14 +366,26 @@ export default function CheckoutPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-6 py-3.5 gold-gradient text-primary font-semibold rounded-lg disabled:opacity-50"
+                className="mt-6 w-full rounded-xl gold-gradient py-3.5 font-semibold text-primary disabled:opacity-50"
               >
                 {loading ? "Placing Order..." : "Place Order"}
               </button>
 
-              <div className="flex items-center justify-center gap-2 mt-4 text-xs text-muted-foreground">
-                <ShieldCheck className="w-4 h-4" />
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <ShieldCheck className="h-4 w-4" />
                 Secure checkout • 256-bit encryption
+              </div>
+
+              <div className="mt-4 rounded-2xl bg-muted/40 p-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" />
+                  <div>
+                    <p className="text-sm font-semibold">Fast, trusted order handling</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Clear delivery timelines, order tracking, and support after purchase.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
