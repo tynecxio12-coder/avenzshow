@@ -1,3 +1,14 @@
+const optimizeImageUrl = (url?: string | null) => {
+  const fallback = "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=75&w=900&auto=format&fit=crop";
+  if (!url) return fallback;
+
+  if (url.includes("images.unsplash.com")) {
+    const clean = url.split("?")[0];
+    return `${clean}?q=75&w=900&auto=format&fit=crop`;
+  }
+
+  return url;
+};
 export type ProductColor = {
   name: string;
   hex: string;
@@ -203,10 +214,10 @@ export const mapSupabaseProduct = (row: any): Product => {
 
   const colors = buildColors(row.name || "");
 
-  const mainImage =
-    row.image_url ||
-    row.thumbnail ||
-    "https://images.unsplash.com/photo-1542291026-7eec264c27ff";
+  const mainImage = optimizeImageUrl(row.image_url || row.thumbnail);
+const secondImage = optimizeImageUrl(row.image_url_2 || row.image_url || row.thumbnail);
+const thirdImage = optimizeImageUrl(row.image_url_3 || row.image_url || row.thumbnail);
+  
 
   return {
     id: row.id,
@@ -222,11 +233,7 @@ export const mapSupabaseProduct = (row: any): Product => {
     stock: Number(row.stock ?? 0),
     sku: row.sku ?? "N/A",
     image_url: mainImage,
-    images: [
-      mainImage,
-      row.image_url_2 || mainImage,
-      row.image_url_3 || mainImage,
-    ],
+    images: [mainImage, secondImage, thirdImage],
     featured: Boolean(row.featured),
     bestSeller: Boolean(row.best_seller),
     isNew: Boolean(row.new_arrival),
