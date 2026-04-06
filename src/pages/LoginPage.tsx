@@ -3,7 +3,6 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 import Layout from "../components/layout/Layout";
 import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../lib/supabase";
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -28,25 +27,17 @@ export default function LoginPage() {
       return;
     }
 
-    if (!data.session?.user) {
+    const loggedInUser = data?.user ?? data?.session?.user;
+
+    if (!loggedInUser) {
       setErrorMessage("Login succeeded but no session was created.");
       setLoading(false);
       return;
     }
 
-    const userId = data.session.user.id;
+    const isAdmin = loggedInUser?.app_metadata?.role === "admin";
 
-    const { data: profile, error: profileError } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", userId)
-      .maybeSingle();
-
-    if (profileError) {
-      console.error("Profile role fetch error:", profileError.message);
-    }
-
-    if (profile?.role === "admin") {
+    if (isAdmin) {
       navigate("/admin/orders", { replace: true });
     } else {
       navigate("/account", { replace: true });
