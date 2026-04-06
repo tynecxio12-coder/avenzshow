@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
@@ -67,11 +68,31 @@ export default function Navbar() {
   }, [location]);
 
   useEffect(() => {
-    if (!user) {
-      setAccountPath("/login");
-    } else {
-      setAccountPath(isAdmin ? "/admin/orders" : "/account");
-    }
+    const loadRole = async () => {
+      if (!user) {
+        setAccountPath("/login");
+        return;
+      }
+
+      if (isAdmin) {
+        setAccountPath("/admin/orders");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Navbar role fetch error:", error.message);
+      }
+
+      setAccountPath(data?.role === "admin" ? "/admin/orders" : "/account");
+    };
+
+    loadRole();
   }, [user, isAdmin]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
