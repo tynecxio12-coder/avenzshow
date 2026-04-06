@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { useStore } from "@/contexts/StoreContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
 import { motion, AnimatePresence } from "framer-motion";
 
 const navLinks = [
@@ -51,7 +50,7 @@ export default function Navbar() {
   const [accountPath, setAccountPath] = useState("/login");
 
   const { cartCount, wishlist, searchQuery, setSearchQuery } = useStore();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -68,23 +67,12 @@ export default function Navbar() {
   }, [location]);
 
   useEffect(() => {
-    const loadRole = async () => {
-      if (!user) {
-        setAccountPath("/login");
-        return;
-      }
-
-      const { data } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      setAccountPath(data?.role === "admin" ? "/admin/orders" : "/account");
-    };
-
-    loadRole();
-  }, [user]);
+    if (!user) {
+      setAccountPath("/login");
+    } else {
+      setAccountPath(isAdmin ? "/admin/orders" : "/account");
+    }
+  }, [user, isAdmin]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -303,6 +291,7 @@ export default function Navbar() {
                         ))}
                       </div>
                     )}
+
                   </div>
                 ))}
 
