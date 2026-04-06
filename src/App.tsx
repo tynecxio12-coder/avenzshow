@@ -1,9 +1,11 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { StoreProvider } from "@/contexts/StoreContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 import HomePage from "./pages/HomePage";
 import ShopPage from "./pages/ShopPage";
@@ -147,8 +149,40 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function SmartAccountRoute() {
   const { user, loading, isAdmin } = useAuth();
+  const [checkingRole, setCheckingRole] = useState(true);
+  const [hasAdminAccess, setHasAdminAccess] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    const checkRole = async () => {
+      if (!user) {
+        setCheckingRole(false);
+        return;
+      }
+
+      if (isAdmin) {
+        setHasAdminAccess(true);
+        setCheckingRole(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Smart account role check error:", error.message);
+      }
+
+      setHasAdminAccess(data?.role === "admin");
+      setCheckingRole(false);
+    };
+
+    checkRole();
+  }, [user, isAdmin]);
+
+  if (loading || checkingRole) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center text-lg">
         Loading...
@@ -160,7 +194,7 @@ function SmartAccountRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  if (isAdmin) {
+  if (hasAdminAccess) {
     return <Navigate to="/admin/orders" replace />;
   }
 
