@@ -1,117 +1,99 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, Lock, Mail } from "lucide-react";
-import Layout from "../components/layout/Layout";
-import { useAuth } from "../contexts/AuthContext";
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { Session, User } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase";
 
-export default function LoginPage() {
-  const navigate = useNavigate();
-  const { signIn } = useAuth();
+type AuthContextType = {
+  user: User | null;
+  session: Session | null;
+  loading: boolean;
+  isAdmin: boolean;
+  signUp: (email: string, password: string, fullName?: string) => Promise<any>;
+  signIn: (email: string, password: string) => Promise<any>;
+  signOut: () => Promise<void>;
+};
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMessage("");
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
-    const { data, error } = await signIn(email, password);
+  useEffect(() => {
+    let mounted = true;
 
-    if (error) {
-      setErrorMessage(error.message);
+    const loadSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (error) {
+        console.error("Session load error:", error.message);
+      }
+
+      if (!mounted) return;
+
+      setSession(data.session ?? null);
+      setUser(data.session?.user ?? null);
       setLoading(false);
-      return;
-    }
+    };
 
-    const loggedInUser = data?.user ?? data?.session?.user;
+    loadSession();
 
-    if (!loggedInUser) {
-      setErrorMessage("Login succeeded but no session was created.");
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!mounted) return;
+
+      setSession(session ?? null);
+      setUser(session?.user ?? null);
       setLoading(false);
-      return;
-    }
+    });
 
-    const isAdmin = loggedInUser?.app_metadata?.role === "admin";
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
-    if (isAdmin) {
-      navigate("/admin/orders", { replace: true });
-    } else {
-      navigate("/account", { replace: true });
-    }
-
-    setLoading(false);
+  const signUp = async (email: string, password: string, fullName?: string) => {
+    return await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: fullName || "",
+        },
+      },
+    });
   };
 
+  const signIn = async (email: string, password: string) => {
+    return await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+  };
+
+  const signOut = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const isAdmin = user?.app_metadata?.role === "admin";
+
   return (
-    <Layout>
-      <div className="min-h-[80vh] flex items-center justify-center bg-background px-4 py-12">
-        <div className="w-full max-w-xl rounded-3xl border border-border bg-card p-8 md:p-10 shadow-sm">
-          <div className="text-center mb-8">
-            <h1 className="font-display text-4xl md:text-5xl font-bold">Welcome Back</h1>
-            <p className="text-muted-foreground mt-3 text-lg">
-              Sign in to your AvenzShoe account
-            </p>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div className="relative">
-              <Mail className="w-5 h-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
-              <input
-                type="email"
-                placeholder="Email address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full h-14 rounded-xl border border-border bg-background pl-12 pr-4 text-base outline-none focus:ring-2 focus:ring-gold/40"
-              />
-            </div>
-
-            <div className="relative">
-              <Lock className="w-5 h-5 text-muted-foreground absolute left-4 top-1/2 -translate-y-1/2" />
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full h-14 rounded-xl border border-border bg-background pl-12 pr-12 text-base outline-none focus:ring-2 focus:ring-gold/40"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground"
-              >
-                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-              </button>
-            </div>
-
-            {errorMessage && (
-              <div className="rounded-xl border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-600">
-                {errorMessage}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-14 rounded-xl gold-gradient text-primary font-bold tracking-[0.18em] uppercase text-base hover:opacity-90 transition disabled:opacity-60"
-            >
-              {loading ? "Signing In..." : "Sign In"}
-            </button>
-          </form>
-
-          <p className="text-center text-muted-foreground mt-8 text-lg">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-gold font-semibold hover:underline">
-              Create one
-            </Link>
-          </p>
-        </div>
-      </div>
-    </Layout>
+    <AuthContext.Provider
+      value={{ user, session, loading, isAdmin, signUp, signIn, signOut }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
+}
+
+export function useAuth() {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used inside AuthProvider");
+  }
+
+  return context;
 }
