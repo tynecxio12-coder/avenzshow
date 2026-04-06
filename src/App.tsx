@@ -148,19 +148,13 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function SmartAccountRoute() {
-  const { user, loading, isAdmin } = useAuth();
+  const { user, loading } = useAuth();
   const [checkingRole, setCheckingRole] = useState(true);
-  const [hasAdminAccess, setHasAdminAccess] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     const checkRole = async () => {
       if (!user) {
-        setCheckingRole(false);
-        return;
-      }
-
-      if (isAdmin) {
-        setHasAdminAccess(true);
         setCheckingRole(false);
         return;
       }
@@ -175,12 +169,12 @@ function SmartAccountRoute() {
         console.error("Smart account role check error:", error.message);
       }
 
-      setHasAdminAccess(data?.role === "admin");
+      setIsAdmin(data?.role === "admin");
       setCheckingRole(false);
     };
 
     checkRole();
-  }, [user, isAdmin]);
+  }, [user]);
 
   if (loading || checkingRole) {
     return (
@@ -194,7 +188,7 @@ function SmartAccountRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  if (hasAdminAccess) {
+  if (isAdmin) {
     return <Navigate to="/admin/orders" replace />;
   }
 
